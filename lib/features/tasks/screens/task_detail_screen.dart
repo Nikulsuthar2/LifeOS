@@ -122,14 +122,14 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + bottomInset),
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
+    return Material(
+      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + bottomInset),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Drag handle
@@ -360,6 +360,7 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
           ),
         ],
       ),
+    ),
     );
   }
 }

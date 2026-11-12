@@ -299,16 +299,18 @@ class _RoadmapDetailScreenState extends ConsumerState<RoadmapDetailScreen> {
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 14),
-                    decoration: BoxDecoration(
+                    child: Material(
                       color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                        ),
                       ),
-                    ),
-                    child: Theme(
-                      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                      child: ExpansionTile(
+                      clipBehavior: Clip.antiAlias,
+                      child: Theme(
+                        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                        child: ExpansionTile(
                         initiallyExpanded: true,
                         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         title: Row(
@@ -447,6 +449,7 @@ class _RoadmapDetailScreenState extends ConsumerState<RoadmapDetailScreen> {
                           ),
                         ],
                       ),
+                    ),
                     ),
                   );
                 }),

@@ -135,13 +135,13 @@ class _QuickCaptureSheetState extends ConsumerState<QuickCaptureSheet> with Sing
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + bottomInset),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
+    return Material(
+      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 20 + bottomInset),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -357,6 +357,7 @@ class _QuickCaptureSheetState extends ConsumerState<QuickCaptureSheet> with Sing
           ),
         ],
       ),
+    ),
     );
   }
 }
