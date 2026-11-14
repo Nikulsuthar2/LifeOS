@@ -15,10 +15,26 @@ class DatabaseSchema {
       goal_id TEXT,
       roadmap_topic_id TEXT,
       is_top_priority INTEGER DEFAULT 0,
+      is_all_day INTEGER DEFAULT 0,
       recurrence TEXT DEFAULT 'none',
+      end_date TEXT,
+      recurrence_end_date TEXT,
       completed_at TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
+    );
+    ''',
+    '''
+    CREATE TABLE IF NOT EXISTS task_templates (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT,
+      priority TEXT DEFAULT 'medium',
+      estimate_minutes INTEGER DEFAULT 30,
+      is_all_day INTEGER DEFAULT 0,
+      category TEXT DEFAULT 'General',
+      subtasks_json TEXT,
+      created_at TEXT NOT NULL
     );
     ''',
     '''

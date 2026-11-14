@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_tokens.dart';
 
+/// Clean, compact metric card for Life OS.
 class MetricCard extends StatelessWidget {
   final String title;
   final String value;
@@ -29,12 +31,12 @@ class MetricCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             color: isDark ? AppColors.darkCard : AppColors.lightCard,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
               color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
               width: 1,
@@ -48,44 +50,44 @@ class MetricCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: iconColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                      color: iconColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: Icon(icon, size: 18, color: iconColor),
+                    child: Icon(icon, size: 16, color: iconColor),
                   ),
                   if (progress != null)
                     Text(
                       '${(progress! * 100).round()}%',
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
                         color: iconColor,
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.sm),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     value,
                     style: TextStyle(
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.5,
                       color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w500,
                       color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                     ),
@@ -93,15 +95,13 @@ class MetricCard extends StatelessWidget {
                 ],
               ),
               if (progress != null) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.xs),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                   child: LinearProgressIndicator(
                     value: progress!.clamp(0.0, 1.0),
                     minHeight: 4,
-                    backgroundColor: isDark
-                        ? AppColors.darkBorder
-                        : AppColors.lightBorder,
+                    backgroundColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                     valueColor: AlwaysStoppedAnimation<Color>(iconColor),
                   ),
                 ),
@@ -113,4 +113,3 @@ class MetricCard extends StatelessWidget {
     );
   }
 }
-

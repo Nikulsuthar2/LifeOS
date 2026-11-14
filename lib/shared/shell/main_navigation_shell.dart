@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/quick_capture_sheet.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/learning/screens/roadmaps_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
+import '../../features/tasks/providers/task_provider.dart';
 import '../../features/tasks/screens/tasks_screen.dart';
+import '../../features/tasks/widgets/create_task_sheet.dart';
 import '../../features/track/screens/track_screen.dart';
 
-class MainNavigationShell extends StatefulWidget {
+class MainNavigationShell extends ConsumerStatefulWidget {
   const MainNavigationShell({super.key});
 
   @override
-  State<MainNavigationShell> createState() => _MainNavigationShellState();
+  ConsumerState<MainNavigationShell> createState() => _MainNavigationShellState();
 }
 
-class _MainNavigationShellState extends State<MainNavigationShell> {
+class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = const [
@@ -33,7 +36,15 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         children: _screens,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => QuickCaptureSheet.show(context),
+        onPressed: () {
+          if (_currentIndex == 1) {
+            // Contextual FAB on Tasks page strictly creates a Task (To-Do)
+            final initialDate = ref.read(selectedTaskDateProvider);
+            CreateTaskSheet.show(context, initialDate: initialDate);
+            return;
+          }
+          QuickCaptureSheet.show(context);
+        },
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, size: 28),
       ),
@@ -73,4 +84,3 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     );
   }
 }
-

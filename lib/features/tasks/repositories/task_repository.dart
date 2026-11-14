@@ -77,6 +77,63 @@ class TaskRepository {
     return tasks;
   }
 
+  Future<List<TaskItem>> getTasksForDate(DateTime date, {String? filter}) async {
+    final db = await _db;
+    final dateStr = DateFormat('yyyy-MM-dd').format(date);
+    final isToday = dateStr == DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    String whereClause;
+    List<dynamic> whereArgs = [];
+
+    if (filter == 'inbox') {
+      whereClause = "status = 'inbox'";
+    } else {
+      if (isToday) {
+        whereClause = "(due_date LIKE ? OR (is_top_priority = 1 AND status != 'completed')) AND status != 'inbox'";
+        whereArgs.add('$dateStr%');
+      } else {
+        whereClause = "due_date LIKE ? AND status != 'inbox'";
+        whereArgs.add('$dateStr%');
+      }
+      if (filter == 'completed') {
+        whereClause += " AND status = 'completed'";
+      } else if (filter == 'pending') {
+        whereClause += " AND status != 'completed' AND status != 'cancelled'";
+      }
+    }
+
+    final rows = await db.query(
+      'tasks',
+      where: whereClause,
+      whereArgs: whereArgs.isEmpty ? null : whereArgs,
+      orderBy: 'is_all_day DESC, CASE WHEN scheduled_time IS NULL OR scheduled_time = "" THEN 1 ELSE 0 END, scheduled_time ASC, is_top_priority DESC, priority DESC, created_at ASC',
+    );
+
+    final List<TaskItem> tasks = [];
+    for (final row in rows) {
+      final subtasksRows = await db.query(
+        'subtasks',
+        where: 'task_id = ?',
+        whereArgs: [row['id']],
+        orderBy: 'position ASC',
+      );
+      final subtasks = subtasksRows.map((s) => Subtask.fromMap(s)).toList();
+      tasks.add(TaskItem.fromMap(row, subtasks: subtasks));
+    }
+    return tasks;
+  }
+
+  Future<Set<String>> getTaskDatesForWeek(DateTime startOfWeek, DateTime endOfWeek) async {
+    final db = await _db;
+    final startStr = DateFormat('yyyy-MM-dd').format(startOfWeek);
+    final endStr = DateFormat('yyyy-MM-dd').format(endOfWeek.add(const Duration(days: 1)));
+    final rows = await db.rawQuery(
+      "SELECT DISTINCT substr(due_date, 1, 10) as day FROM tasks WHERE due_date >= ? AND due_date < ? AND status != 'cancelled'",
+      [startStr, endStr],
+    );
+    return rows.map((r) => r['day'] as String).where((s) => s.isNotEmpty).toSet();
+  }
+
   Future<List<TaskItem>> getTopPrioritiesForToday() async {
     final db = await _db;
     final todayStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -171,6 +228,53 @@ class TaskRepository {
       await txn.delete('subtasks', where: 'task_id = ?', whereArgs: [taskId]);
       await txn.delete('tasks', where: 'id = ?', whereArgs: [taskId]);
     });
+  }
+
+  Future<List<TaskItem>> getTasksForDateRange(DateTime start, DateTime end) async {
+    final db = await _db;
+    final startStr = DateFormat('yyyy-MM-dd').format(start);
+    final endStr = DateFormat('yyyy-MM-dd').format(end.add(const Duration(days: 1)));
+
+    final rows = await db.query(
+      'tasks',
+      where: "status != 'cancelled' AND due_date >= ? AND due_date < ?",
+      whereArgs: [startStr, endStr],
+      orderBy: 'due_date ASC, is_all_day DESC, scheduled_time ASC',
+    );
+
+    final List<TaskItem> tasks = [];
+    for (final row in rows) {
+      final subtasksRows = await db.query(
+        'subtasks',
+        where: 'task_id = ?',
+        whereArgs: [row['id']],
+        orderBy: 'position ASC',
+      );
+      final subtasks = subtasksRows.map((s) => Subtask.fromMap(s)).toList();
+      tasks.add(TaskItem.fromMap(row, subtasks: subtasks));
+    }
+    return tasks;
+  }
+
+  Future<List<TaskTemplate>> getTemplates() async {
+    final db = await _db;
+    final rows = await db.query('task_templates', orderBy: 'created_at DESC');
+    return rows.map((r) => TaskTemplate.fromMap(r)).toList();
+  }
+
+  Future<void> insertTemplate(TaskTemplate template) async {
+    final db = await _db;
+    final id = template.id.isEmpty ? _uuid.v4() : template.id;
+    await db.insert(
+      'task_templates',
+      template.toMap()..['id'] = id,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> deleteTemplate(String id) async {
+    final db = await _db;
+    await db.delete('task_templates', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<Map<String, int>> getTodayTaskMetrics() async {

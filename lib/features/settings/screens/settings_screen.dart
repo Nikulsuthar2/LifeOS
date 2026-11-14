@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/theme/theme_provider.dart';
 import '../../goals/providers/goal_provider.dart';
 import '../../goals/screens/goals_screen.dart';
 import '../../journal/providers/journal_provider.dart';
@@ -21,6 +23,15 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _jsonRestoreController = TextEditingController();
+
+  static const List<Map<String, dynamic>> _accentPresets = [
+    {'name': 'Indigo', 'color': Color(0xFF6366F1)},
+    {'name': 'Emerald', 'color': Color(0xFF10B981)},
+    {'name': 'Sky', 'color': Color(0xFF0EA5E9)},
+    {'name': 'Amber', 'color': Color(0xFFF59E0B)},
+    {'name': 'Rose', 'color': Color(0xFFF43F5E)},
+    {'name': 'Violet', 'color': Color(0xFF8B5CF6)},
+  ];
 
   @override
   void dispose() {
@@ -99,14 +110,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   );
                 }
               } catch (e) {
-                if (dialogCtx.mounted) {
-                  messenger.showSnackBar(
-                    SnackBar(content: Text('Error restoring data: $e'), backgroundColor: AppColors.error),
-                  );
-                }
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Failed to restore backup: $e')),
+                );
               }
             },
-            child: const Text('Restore'),
+            child: const Text('Restore Data'),
           ),
         ],
       ),
@@ -119,21 +128,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Reset to Sample Data'),
         content: const Text(
-          'This will reset your local database to the default sample dataset (Computer Science Roadmap, Daily Habits, Tasks).',
+          'This will wipe existing records and reload the rich Computer Science & AI Roadmap, default habits, and time blocks. Are you sure?',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Reset'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.urgent),
+            child: const Text('Reset Everything'),
           ),
         ],
       ),
     );
 
     if (confirmed == true) {
-      await AppDatabase.instance.resetToSeedData();
+      await AppDatabase.instance.resetToSampleData();
       _refreshAllProviders();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -162,15 +171,173 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeSettings = ref.watch(themeSettingsProvider);
+    final themeNotifier = ref.read(themeSettingsProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('More & Settings'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 88),
         children: [
-          // Life Modules Navigation Section
+          // 1. Appearance & Theme Settings
+          Text(
+            'Appearance & Theme',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+
+          Material(
+            color: isDark ? AppColors.darkCard : AppColors.lightCard,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                  child: Text(
+                    'Theme Mode',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SegmentedButton<ThemeMode>(
+                    segments: const [
+                      ButtonSegment(
+                        value: ThemeMode.system,
+                        icon: Icon(Icons.brightness_auto, size: 16),
+                        label: Text('System'),
+                      ),
+                      ButtonSegment(
+                        value: ThemeMode.light,
+                        icon: Icon(Icons.light_mode, size: 16),
+                        label: Text('Light'),
+                      ),
+                      ButtonSegment(
+                        value: ThemeMode.dark,
+                        icon: Icon(Icons.dark_mode, size: 16),
+                        label: Text('Dark'),
+                      ),
+                    ],
+                    selected: {themeSettings.themeMode},
+                    onSelectionChanged: (newSelection) {
+                      themeNotifier.setThemeMode(newSelection.first);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+
+                // Follow System Dynamic Color (Material You)
+                SwitchListTile(
+                  title: const Text(
+                    'Follow System Dynamic Color',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    'Extract wallpaper accent on Android 12+ (Material You)',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  value: themeSettings.followDynamicColor,
+                  onChanged: (val) => themeNotifier.setFollowDynamicColor(val),
+                ),
+                const Divider(height: 1),
+
+                // Custom Accent Palette
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Accent Color Palette',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                        ),
+                      ),
+                      if (themeSettings.followDynamicColor)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.info.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'Dynamic Active',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.info),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: _accentPresets.map((preset) {
+                      final color = preset['color'] as Color;
+                      final isSelected = themeSettings.accentColor.toARGB32() == color.toARGB32();
+
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          themeNotifier.setAccentColor(color);
+                          if (themeSettings.followDynamicColor) {
+                            themeNotifier.setFollowDynamicColor(false);
+                          }
+                        },
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected ? Colors.white : Colors.transparent,
+                              width: 2.5,
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: color.withValues(alpha: 0.4),
+                                      blurRadius: 8,
+                                      spreadRadius: 1,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: isSelected
+                              ? const Center(
+                                  child: Icon(Icons.check, size: 18, color: Colors.white),
+                                )
+                              : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+
+          // 2. Life Modules Navigation Section
           Text(
             'Life Modules',
             style: TextStyle(
@@ -179,12 +346,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
 
           Material(
             color: isDark ? AppColors.darkCard : AppColors.lightCard,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
             ),
             clipBehavior: Clip.antiAlias,
@@ -212,9 +379,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
 
-          // Data & Storage Section (Local-first & Backup)
+          // 3. Data & Storage Section (Local-first & Backup)
           Text(
             'Data & Privacy (Local-First)',
             style: TextStyle(
@@ -223,12 +390,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
 
           Material(
             color: isDark ? AppColors.darkCard : AppColors.lightCard,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
             ),
             clipBehavior: Clip.antiAlias,
@@ -257,9 +424,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xxl),
 
-          // App Info
+          // 4. App Info
           Center(
             child: Column(
               children: [

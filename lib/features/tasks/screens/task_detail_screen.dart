@@ -31,6 +31,11 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
   late TaskPriority _priority;
   late int _estimateMinutes;
   late bool _isTopPriority;
+  late bool _isAllDay;
+  late String _recurrence;
+  DateTime? _dueDate;
+  String? _scheduledTime;
+  DateTime? _endDate;
   late List<Subtask> _subtasks;
 
   @override
@@ -42,6 +47,11 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
     _priority = widget.task.priority;
     _estimateMinutes = widget.task.estimateMinutes;
     _isTopPriority = widget.task.isTopPriority;
+    _isAllDay = widget.task.isAllDay;
+    _recurrence = widget.task.recurrence;
+    _dueDate = widget.task.dueDate;
+    _scheduledTime = widget.task.scheduledTime;
+    _endDate = widget.task.endDate;
     _subtasks = List.from(widget.task.subtasks);
   }
 
@@ -60,6 +70,11 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
       priority: _priority,
       estimateMinutes: _estimateMinutes,
       isTopPriority: _isTopPriority,
+      isAllDay: _isAllDay,
+      recurrence: _recurrence,
+      dueDate: _dueDate,
+      scheduledTime: _scheduledTime,
+      endDate: _endDate,
       subtasks: _subtasks,
       updatedAt: DateTime.now(),
     );
@@ -68,6 +83,8 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
     await repo.updateTask(updated);
 
     ref.invalidate(tasksListProvider);
+    ref.invalidate(calendarTasksProvider);
+    ref.invalidate(weekTaskDatesProvider);
     ref.invalidate(topPrioritiesProvider);
     ref.invalidate(todayTaskMetricsProvider);
 
@@ -111,6 +128,8 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
       final repo = ref.read(taskRepositoryProvider);
       await repo.deleteTask(widget.task.id);
       ref.invalidate(tasksListProvider);
+      ref.invalidate(calendarTasksProvider);
+      ref.invalidate(weekTaskDatesProvider);
       ref.invalidate(topPrioritiesProvider);
       ref.invalidate(todayTaskMetricsProvider);
       if (mounted) Navigator.pop(context);
@@ -121,6 +140,7 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final durationOptions = <int>{5, 10, 15, 20, 25, 30, 45, 60, 90, 120, _estimateMinutes}.toList()..sort();
 
     return Material(
       color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
@@ -229,7 +249,7 @@ class _TaskDetailSheetState extends ConsumerState<TaskDetailSheet> {
                             labelText: 'Est. Time',
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
-                          items: [15, 25, 30, 45, 60, 90, 120].map((m) {
+                          items: durationOptions.map((m) {
                             return DropdownMenuItem(
                               value: m,
                               child: Text('$m min'),

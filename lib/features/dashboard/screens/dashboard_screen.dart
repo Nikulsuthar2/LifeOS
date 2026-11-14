@@ -1,47 +1,135 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
+import '../../../core/models/daily_plan.dart';
 import '../../../core/models/roadmap.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/metric_card.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/widgets/daily_progress_summary.dart';
 import '../../../core/widgets/quick_capture_sheet.dart';
 import '../../../core/widgets/section_header.dart';
 import '../../learning/providers/roadmap_provider.dart';
+import '../../learning/screens/roadmaps_screen.dart';
 import '../../learning/screens/topic_detail_screen.dart';
 import '../../planning/providers/planning_provider.dart';
+import '../../planning/widgets/schedule_timeline.dart';
 import '../../tasks/providers/task_provider.dart';
 import '../../tasks/screens/task_detail_screen.dart';
 import '../../tasks/widgets/task_card.dart';
 import '../../track/focus/providers/focus_provider.dart';
 import '../../track/habits/providers/habit_provider.dart';
 
-class DashboardScreen extends ConsumerWidget {
+/// Premium, action-oriented Home / Dashboard for Life OS.
+/// Replaces oversized statistics with actionable priorities, quick habit toggles,
+/// visual schedule timeline, and active learning roadmap integration.
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
+  @override
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning!';
-    if (hour < 17) return 'Good afternoon!';
-    return 'Good evening!';
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  void _showAddTimeBlockDialog(BuildContext context) {
+    final titleController = TextEditingController();
+    final startController = TextEditingController(text: '09:00');
+    final endController = TextEditingController(text: '10:00');
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Add Time Block'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Activity / Block Title',
+                hintText: 'e.g. Deep Work: System Design',
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: startController,
+                    decoration: const InputDecoration(labelText: 'Start (e.g. 09:00)'),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: TextField(
+                    controller: endController,
+                    decoration: const InputDecoration(labelText: 'End (e.g. 10:30)'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final title = titleController.text.trim();
+              if (title.isEmpty) return;
+
+              final now = DateTime.now();
+              final dateStr = DateFormat('yyyy-MM-dd').format(now);
+              final block = ScheduleBlock(
+                id: const Uuid().v4(),
+                title: title,
+                startTime: startController.text.trim(),
+                endTime: endController.text.trim(),
+                dateStr: dateStr,
+                isCompleted: false,
+              );
+
+              final repo = ref.read(planningRepositoryProvider);
+              await repo.insertScheduleBlock(block);
+              ref.invalidate(scheduleBlocksProvider);
+              if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+            },
+            child: const Text('Add Block'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final now = DateTime.now();
     final dayDateStr = DateFormat('EEEE · MMM d').format(now).toUpperCase();
 
-    // Providers
+    // Data streams
     final taskMetricsAsync = ref.watch(todayTaskMetricsProvider);
     final focusMinutesAsync = ref.watch(todayFocusMinutesProvider);
     final habitMetricsAsync = ref.watch(todayHabitMetricsProvider);
     final topPrioritiesAsync = ref.watch(topPrioritiesProvider);
     final activeRoadmapAsync = ref.watch(activeRoadmapSpotlightProvider);
     final scheduleBlocksAsync = ref.watch(scheduleBlocksProvider);
+    final habitsListAsync = ref.watch(habitsListProvider);
 
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
+          color: AppColors.primary,
           onRefresh: () async {
             ref.invalidate(todayTaskMetricsProvider);
             ref.invalidate(todayFocusMinutesProvider);
@@ -49,16 +137,18 @@ class DashboardScreen extends ConsumerWidget {
             ref.invalidate(topPrioritiesProvider);
             ref.invalidate(activeRoadmapSpotlightProvider);
             ref.invalidate(scheduleBlocksProvider);
+            ref.invalidate(habitsListProvider);
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 88),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Top Header: Day & Motivational greeting
+                // Top Header: Date, Calm Greeting, and Quick Capture
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,15 +158,15 @@ class DashboardScreen extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
+                            letterSpacing: 1.1,
                             color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppSpacing.xxs),
                         Text(
                           _getGreeting(),
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 22,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.5,
                             color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
@@ -91,145 +181,55 @@ class DashboardScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline, size: 28, color: AppColors.primaryLight),
+                    IconButton.filledTonal(
+                      icon: const Icon(Icons.add, size: 20),
                       tooltip: 'Quick Capture',
                       onPressed: () => QuickCaptureSheet.show(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // 2x2 Metric Cards Grid
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.35,
-                  children: [
-                    // Tasks Metric
-                    taskMetricsAsync.when(
-                      data: (m) {
-                        final total = m['total'] ?? 0;
-                        final done = m['completed'] ?? 0;
-                        return MetricCard(
-                          title: 'Tasks completed',
-                          value: '$done/$total',
-                          icon: Icons.check_circle_outline,
-                          iconColor: AppColors.primaryLight,
-                          progress: total > 0 ? done / total : 0.0,
-                        );
-                      },
-                      loading: () => const MetricCard(
-                        title: 'Tasks completed',
-                        value: '...',
-                        icon: Icons.check_circle_outline,
-                      ),
-                      error: (err, stack) => const MetricCard(
-                        title: 'Tasks completed',
-                        value: '0',
-                        icon: Icons.check_circle_outline,
-                      ),
-                    ),
-
-                    // Focus Time Metric
-                    focusMinutesAsync.when(
-                      data: (mins) => MetricCard(
-                        title: 'Focus time today',
-                        value: '$mins min',
-                        icon: Icons.timer_outlined,
-                        iconColor: AppColors.pomodoro,
-                      ),
-                      loading: () => const MetricCard(
-                        title: 'Focus time today',
-                        value: '...',
-                        icon: Icons.timer_outlined,
-                      ),
-                      error: (err, stack) => const MetricCard(
-                        title: 'Focus time today',
-                        value: '0 min',
-                        icon: Icons.timer_outlined,
-                      ),
-                    ),
-
-                    // Habits Completed Metric
-                    habitMetricsAsync.when(
-                      data: (h) {
-                        final total = h['total'] ?? 0;
-                        final done = h['completed'] ?? 0;
-                        return MetricCard(
-                          title: 'Habits completed',
-                          value: '$done/$total',
-                          icon: Icons.bolt,
-                          iconColor: AppColors.accent,
-                          progress: total > 0 ? done / total : 0.0,
-                        );
-                      },
-                      loading: () => const MetricCard(
-                        title: 'Habits completed',
-                        value: '...',
-                        icon: Icons.bolt,
-                      ),
-                      error: (err, stack) => const MetricCard(
-                        title: 'Habits completed',
-                        value: '0/0',
-                        icon: Icons.bolt,
-                      ),
-                    ),
-
-                    // Learning Session Metric
-                    activeRoadmapAsync.when(
-                      data: (spotlight) {
-                        final roadmap = spotlight?['roadmap'] as Roadmap?;
-                        final progress = roadmap?.progressPercentage ?? 0.0;
-                        return MetricCard(
-                          title: 'Roadmap progress',
-                          value: '${(progress * 100).round()}%',
-                          icon: Icons.school_outlined,
-                          iconColor: AppColors.secondary,
-                          progress: progress,
-                        );
-                      },
-                      loading: () => const MetricCard(
-                        title: 'Roadmap progress',
-                        value: '...',
-                        icon: Icons.school_outlined,
-                      ),
-                      error: (err, stack) => const MetricCard(
-                        title: 'Roadmap progress',
-                        value: '0%',
-                        icon: Icons.school_outlined,
+                      style: IconButton.styleFrom(
+                        backgroundColor: isDark ? AppColors.darkCardElevated : AppColors.lightCardElevated,
+                        foregroundColor: AppColors.primaryLight,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.lg),
 
-                // Top Priorities Section
-                const SectionHeader(
+                // 1. One Compact Daily Progress Summary (Replaces 2x2 oversized KPI grid)
+                DailyProgressSummary(
+                  tasksCompleted: taskMetricsAsync.value?['completed'] ?? 0,
+                  tasksTotal: taskMetricsAsync.value?['total'] ?? 0,
+                  focusMinutes: focusMinutesAsync.value ?? 0,
+                  habitsCompleted: habitMetricsAsync.value?['completed'] ?? 0,
+                  habitsTotal: habitMetricsAsync.value?['total'] ?? 0,
+                  roadmapProgress: (activeRoadmapAsync.value?['roadmap'] as Roadmap?)?.progressPercentage ?? 0.0,
+                ),
+                const SizedBox(height: AppSpacing.md),
+
+                // 2. Today's Top Priorities (Action-first hero section)
+                SectionHeader(
                   title: "Today's Priorities",
-                  subtitle: "Up to 3 high-leverage focus items",
+                  subtitle: "High-leverage focus items",
+                  actionLabel: "+ Add",
+                  onAction: () => QuickCaptureSheet.show(context),
                 ),
                 topPrioritiesAsync.when(
                   data: (priorities) {
                     if (priorities.isEmpty) {
                       return Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
                             color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                           ),
                         ),
                         child: Center(
                           child: Text(
-                            'All priorities completed for today! 🎉',
+                            'All priorities for today completed. Great momentum! ✨',
                             style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
                               color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                             ),
                           ),
@@ -242,19 +242,144 @@ class DashboardScreen extends ConsumerWidget {
                         return TaskCard(
                           task: task,
                           onTap: () => TaskDetailSheet.show(context, task),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.timer_outlined, size: 18),
+                            tooltip: 'Focus on this task',
+                            visualDensity: VisualDensity.compact,
+                            color: AppColors.primaryLight,
+                            onPressed: () {
+                              ref.read(focusTimerProvider.notifier).linkTask(task.id, task.title);
+                              ref.read(focusTimerProvider.notifier).setPreset(task.estimateMinutes, 'focus');
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Focus timer primed for "${task.title}"'),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                          ),
                         );
                       }).toList(),
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Text('Error: $e'),
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSpacing.md),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                  error: (e, _) => Text('Error loading priorities: $e'),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.sm),
 
-                // Active Learning Roadmap Spotlight
+                // 3. Small Habit Summary: Fast Daily Habit Check-off Strip
                 const SectionHeader(
-                  title: "Active Learning Roadmap",
-                  subtitle: "Sequential skill progression",
+                  title: "Today's Habits",
+                  subtitle: "Consistency without punishment",
+                ),
+                habitsListAsync.when(
+                  data: (habits) {
+                    if (habits.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: habits.map((hw) {
+                          final isDone = hw.isCompletedToday;
+                          final h = hw.habit;
+
+                          return Container(
+                            margin: const EdgeInsets.only(right: AppSpacing.sm),
+                            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
+                                color: isDone
+                                    ? AppColors.success.withValues(alpha: 0.4)
+                                    : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () async {
+                                    final repo = ref.read(habitRepositoryProvider);
+                                    await repo.toggleHabitCompletion(h.id);
+                                    ref.invalidate(habitsListProvider);
+                                    ref.invalidate(todayHabitMetricsProvider);
+                                  },
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    margin: const EdgeInsets.only(right: AppSpacing.sm),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: isDone ? AppColors.success : Colors.transparent,
+                                      border: Border.all(
+                                        color: isDone
+                                            ? AppColors.success
+                                            : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                                        width: 1.8,
+                                      ),
+                                    ),
+                                    child: isDone
+                                        ? const Icon(Icons.check, size: 12, color: Colors.white)
+                                        : null,
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      h.title,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: isDone ? TextDecoration.lineThrough : null,
+                                        color: isDone
+                                            ? (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted)
+                                            : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                                      ),
+                                    ),
+                                    if (hw.streakDays > 0)
+                                      Text(
+                                        '🔥 ${hw.streakDays}d streak',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.warning,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    );
+                  },
+                  loading: () => const SizedBox.shrink(),
+                  error: (err, stack) => const SizedBox.shrink(),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+
+                // 4. Current Learning Activity (Roadmap Spotlight)
+                SectionHeader(
+                  title: "Active Learning",
+                  subtitle: "Sequential skill roadmap",
+                  actionLabel: "All roadmaps",
+                  onAction: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const RoadmapsScreen()),
+                    );
+                  },
                 ),
                 activeRoadmapAsync.when(
                   data: (spotlight) {
@@ -267,10 +392,10 @@ class DashboardScreen extends ConsumerWidget {
                     final topic = spotlight['topic'] as Topic?;
 
                     return Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
                         color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
                           color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                         ),
@@ -283,12 +408,12 @@ class DashboardScreen extends ConsumerWidget {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.school, size: 18, color: AppColors.primaryLight),
-                                  const SizedBox(width: 8),
+                                  const Icon(Icons.school_outlined, size: 16, color: AppColors.primaryLight),
+                                  const SizedBox(width: AppSpacing.xs),
                                   Text(
                                     roadmap.title,
                                     style: TextStyle(
-                                      fontSize: 15,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w700,
                                       color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                                     ),
@@ -305,24 +430,24 @@ class DashboardScreen extends ConsumerWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.sm),
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
                             child: LinearProgressIndicator(
                               value: roadmap.progressPercentage,
-                              minHeight: 6,
+                              minHeight: 4,
                               backgroundColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                               valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                             ),
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: AppSpacing.md),
 
                           if (topic != null) ...[
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.all(AppSpacing.md),
                               decoration: BoxDecoration(
                                 color: isDark ? AppColors.darkCardElevated : AppColors.lightCardElevated,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,7 +466,7 @@ class DashboardScreen extends ConsumerWidget {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: AppColors.primary.withValues(alpha: 0.2),
+                                          color: AppColors.primary.withValues(alpha: 0.15),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
@@ -355,7 +480,7 @@ class DashboardScreen extends ConsumerWidget {
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: AppSpacing.xs),
                                   Text(
                                     topic.title,
                                     style: TextStyle(
@@ -364,7 +489,7 @@ class DashboardScreen extends ConsumerWidget {
                                       color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: AppSpacing.xxs),
                                   Text(
                                     '${topic.completedLessonsCount} of ${topic.lessons.length} lessons completed',
                                     style: TextStyle(
@@ -372,7 +497,7 @@ class DashboardScreen extends ConsumerWidget {
                                       color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                                     ),
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: AppSpacing.md),
                                   Row(
                                     children: [
                                       Expanded(
@@ -388,31 +513,26 @@ class DashboardScreen extends ConsumerWidget {
                                               ),
                                             );
                                           },
-                                          icon: const Icon(Icons.arrow_forward, size: 16),
+                                          icon: const Icon(Icons.arrow_forward, size: 14),
                                           label: const Text('Open Topic', style: TextStyle(fontSize: 12)),
                                           style: FilledButton.styleFrom(
-                                            backgroundColor: AppColors.primary,
                                             padding: const EdgeInsets.symmetric(vertical: 8),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: AppSpacing.sm),
                                       OutlinedButton.icon(
                                         onPressed: () {
                                           ref.read(focusTimerProvider.notifier).linkTopic(topic.id, topic.title);
                                           ref.read(focusTimerProvider.notifier).setPreset(50, 'focus');
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Focus timer prepared for "${topic.title}"')),
+                                            SnackBar(content: Text('Focus timer primed for "${topic.title}"')),
                                           );
                                         },
-                                        icon: const Icon(Icons.timer_outlined, size: 16),
-                                        label: const Text('Focus', style: TextStyle(fontSize: 12)),
+                                        icon: const Icon(Icons.timer_outlined, size: 14),
+                                        label: const Text('Focus 50m', style: TextStyle(fontSize: 12)),
                                         style: OutlinedButton.styleFrom(
-                                          foregroundColor: AppColors.primaryLight,
-                                          side: const BorderSide(color: AppColors.primary),
                                           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                         ),
                                       ),
                                     ],
@@ -425,83 +545,34 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSpacing.md),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
                   error: (e, _) => Text('Error: $e'),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.sm),
 
-                // Today's Time Blocks / Schedule
-                const SectionHeader(
+                // 5. Today's Upcoming Schedule (Visual Timeline)
+                SectionHeader(
                   title: "Today's Schedule",
-                  subtitle: "Time-blocked commitments",
+                  subtitle: "Visual timeline blocks",
+                  actionLabel: "+ Add Block",
+                  onAction: () => _showAddTimeBlockDialog(context),
                 ),
                 scheduleBlocksAsync.when(
-                  data: (blocks) {
-                    if (blocks.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Text(
-                          'No scheduled time blocks for today.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                          ),
-                        ),
-                      );
-                    }
-
-                    return Column(
-                      children: blocks.map((b) {
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                '${b.startTime} - ${b.endTime}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.secondary,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Text(
-                                  b.title,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    decoration: b.isCompleted ? TextDecoration.lineThrough : null,
-                                    color: b.isCompleted
-                                        ? (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted)
-                                        : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
-                                  ),
-                                ),
-                              ),
-                              Checkbox(
-                                value: b.isCompleted,
-                                activeColor: AppColors.success,
-                                onChanged: (val) async {
-                                  final repo = ref.read(planningRepositoryProvider);
-                                  await repo.toggleScheduleBlock(b.id, val ?? false);
-                                  ref.invalidate(scheduleBlocksProvider);
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  },
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  data: (blocks) => ScheduleTimelineWidget(
+                    blocks: blocks,
+                    onAddBlock: () => _showAddTimeBlockDialog(context),
+                  ),
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppSpacing.md),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
                   error: (e, _) => Text('Error: $e'),
                 ),
               ],

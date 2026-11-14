@@ -8,14 +8,16 @@ import '../../features/tasks/providers/task_provider.dart';
 import '../../features/track/habits/providers/habit_provider.dart';
 
 class QuickCaptureSheet extends ConsumerStatefulWidget {
-  const QuickCaptureSheet({super.key});
+  final DateTime? initialDate;
 
-  static Future<void> show(BuildContext context) {
+  const QuickCaptureSheet({super.key, this.initialDate});
+
+  static Future<void> show(BuildContext context, {DateTime? initialDate}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const QuickCaptureSheet(),
+      builder: (context) => QuickCaptureSheet(initialDate: initialDate),
     );
   }
 
@@ -29,6 +31,7 @@ class _QuickCaptureSheetState extends ConsumerState<QuickCaptureSheet> with Sing
   final _taskDescController = TextEditingController();
   TaskPriority _selectedPriority = TaskPriority.medium;
   int _estimateMinutes = 30;
+  late DateTime _targetDate;
   bool _isToday = true;
 
   final _habitTitleController = TextEditingController();
@@ -39,6 +42,9 @@ class _QuickCaptureSheetState extends ConsumerState<QuickCaptureSheet> with Sing
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _targetDate = widget.initialDate ?? DateTime.now();
+    final now = DateTime.now();
+    _isToday = _targetDate.year == now.year && _targetDate.month == now.month && _targetDate.day == now.day;
   }
 
   @override
@@ -54,14 +60,14 @@ class _QuickCaptureSheetState extends ConsumerState<QuickCaptureSheet> with Sing
     final title = _taskTitleController.text.trim();
     if (title.isEmpty) return;
 
-    final now = DateTime.now();
+    final dueDate = _isToday ? DateTime.now() : _targetDate;
     final task = TaskItem(
       id: const Uuid().v4(),
       title: title,
       description: _taskDescController.text.trim(),
       status: TaskStatus.todo,
       priority: _selectedPriority,
-      dueDate: _isToday ? now : now.add(const Duration(days: 1)),
+      dueDate: dueDate,
       estimateMinutes: _estimateMinutes,
       isTopPriority: _selectedPriority == TaskPriority.urgent || _selectedPriority == TaskPriority.high,
     );
@@ -263,7 +269,7 @@ class _QuickCaptureSheetState extends ConsumerState<QuickCaptureSheet> with Sing
                                 labelText: 'Duration',
                                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               ),
-                              items: [15, 25, 30, 45, 60, 90].map((m) {
+                              items: (<int>{5, 10, 15, 20, 25, 30, 45, 60, 90, 120, _estimateMinutes}.toList()..sort()).map((m) {
                                 return DropdownMenuItem(
                                   value: m,
                                   child: Text('$m min', style: const TextStyle(fontSize: 13)),

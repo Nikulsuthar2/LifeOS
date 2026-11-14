@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 enum TaskPriority {
   low,
   medium,
@@ -153,7 +155,10 @@ class TaskItem {
   final String? goalId;
   final String? roadmapTopicId;
   final bool isTopPriority;
-  final String recurrence; // 'none', 'daily', 'weekly'
+  final bool isAllDay;
+  final String recurrence; // 'none', 'daily', 'weekly', 'monthly'
+  final DateTime? endDate; // deadline or multi-day end date
+  final DateTime? recurrenceEndDate; // when repeating stops
   final DateTime? completedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -173,7 +178,10 @@ class TaskItem {
     this.goalId,
     this.roadmapTopicId,
     this.isTopPriority = false,
+    this.isAllDay = false,
     this.recurrence = 'none',
+    this.endDate,
+    this.recurrenceEndDate,
     this.completedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -197,7 +205,10 @@ class TaskItem {
     String? goalId,
     String? roadmapTopicId,
     bool? isTopPriority,
+    bool? isAllDay,
     String? recurrence,
+    DateTime? endDate,
+    DateTime? recurrenceEndDate,
     DateTime? completedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -217,7 +228,10 @@ class TaskItem {
       goalId: goalId ?? this.goalId,
       roadmapTopicId: roadmapTopicId ?? this.roadmapTopicId,
       isTopPriority: isTopPriority ?? this.isTopPriority,
+      isAllDay: isAllDay ?? this.isAllDay,
       recurrence: recurrence ?? this.recurrence,
+      endDate: endDate ?? this.endDate,
+      recurrenceEndDate: recurrenceEndDate ?? this.recurrenceEndDate,
       completedAt: completedAt ?? this.completedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -240,7 +254,10 @@ class TaskItem {
       'goal_id': goalId,
       'roadmap_topic_id': roadmapTopicId,
       'is_top_priority': isTopPriority ? 1 : 0,
+      'is_all_day': isAllDay ? 1 : 0,
       'recurrence': recurrence,
+      'end_date': endDate?.toIso8601String(),
+      'recurrence_end_date': recurrenceEndDate?.toIso8601String(),
       'completed_at': completedAt?.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
@@ -262,7 +279,10 @@ class TaskItem {
       goalId: map['goal_id'] as String?,
       roadmapTopicId: map['roadmap_topic_id'] as String?,
       isTopPriority: (map['is_top_priority'] as int? ?? 0) == 1,
+      isAllDay: (map['is_all_day'] as int? ?? 0) == 1,
       recurrence: (map['recurrence'] as String?) ?? 'none',
+      endDate: map['end_date'] != null ? DateTime.tryParse(map['end_date'] as String) : null,
+      recurrenceEndDate: map['recurrence_end_date'] != null ? DateTime.tryParse(map['recurrence_end_date'] as String) : null,
       completedAt: map['completed_at'] != null ? DateTime.tryParse(map['completed_at'] as String) : null,
       createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'] as String) : DateTime.now(),
       updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'] as String) : DateTime.now(),
@@ -271,3 +291,63 @@ class TaskItem {
   }
 }
 
+class TaskTemplate {
+  final String id;
+  final String title;
+  final String description;
+  final TaskPriority priority;
+  final int estimateMinutes;
+  final bool isAllDay;
+  final String category;
+  final List<String> subtasks;
+  final DateTime createdAt;
+
+  TaskTemplate({
+    required this.id,
+    required this.title,
+    this.description = '',
+    this.priority = TaskPriority.medium,
+    this.estimateMinutes = 30,
+    this.isAllDay = false,
+    this.category = 'General',
+    this.subtasks = const [],
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'priority': priority.name,
+      'estimate_minutes': estimateMinutes,
+      'is_all_day': isAllDay ? 1 : 0,
+      'category': category,
+      'subtasks_json': jsonEncode(subtasks),
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
+
+  factory TaskTemplate.fromMap(Map<String, dynamic> map) {
+    List<String> subtasks = [];
+    if (map['subtasks_json'] != null) {
+      try {
+        final decoded = jsonDecode(map['subtasks_json'] as String);
+        if (decoded is List) {
+          subtasks = decoded.map((e) => e.toString()).toList();
+        }
+      } catch (_) {}
+    }
+    return TaskTemplate(
+      id: map['id'] as String,
+      title: map['title'] as String,
+      description: (map['description'] as String?) ?? '',
+      priority: TaskPriority.fromString(map['priority'] as String?),
+      estimateMinutes: (map['estimate_minutes'] as int?) ?? 30,
+      isAllDay: (map['is_all_day'] as int? ?? 0) == 1,
+      category: (map['category'] as String?) ?? 'General',
+      subtasks: subtasks,
+      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'] as String) : DateTime.now(),
+    );
+  }
+}
