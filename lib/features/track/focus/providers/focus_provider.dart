@@ -122,6 +122,8 @@ class FocusTimerNotifier extends Notifier<FocusTimerState> {
     });
   }
 
+  void startTimer() => start();
+
   void pause() {
     _timer?.cancel();
     state = state.copyWith(isPaused: true);

@@ -15,8 +15,8 @@ import '../../learning/screens/topic_detail_screen.dart';
 import '../../planning/providers/planning_provider.dart';
 import '../../planning/widgets/schedule_timeline.dart';
 import '../../tasks/providers/task_provider.dart';
-import '../../tasks/screens/task_detail_screen.dart';
 import '../../tasks/widgets/task_card.dart';
+import '../../tasks/widgets/task_view_sheet.dart';
 import '../../track/focus/providers/focus_provider.dart';
 import '../../track/habits/providers/habit_provider.dart';
 
@@ -241,7 +241,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       children: priorities.map((task) {
                         return TaskCard(
                           task: task,
-                          onTap: () => TaskDetailSheet.show(context, task),
+                          onTap: () => TaskViewSheet.show(context, task),
                           trailing: IconButton(
                             icon: const Icon(Icons.timer_outlined, size: 18),
                             tooltip: 'Focus on this task',

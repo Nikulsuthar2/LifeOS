@@ -1,14 +1,12 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/widgets/quick_capture_sheet.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
-import '../../features/learning/screens/roadmaps_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
-import '../../features/tasks/providers/task_provider.dart';
 import '../../features/tasks/screens/tasks_screen.dart';
-import '../../features/tasks/widgets/create_task_sheet.dart';
 import '../../features/track/screens/track_screen.dart';
+import '../widgets/quick_action_grid_sheet.dart';
 
 class MainNavigationShell extends ConsumerStatefulWidget {
   const MainNavigationShell({super.key});
@@ -23,7 +21,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   final List<Widget> _screens = const [
     DashboardScreen(),
     TasksScreen(),
-    RoadmapsScreen(),
+    SizedBox.shrink(),
     TrackScreen(),
     SettingsScreen(),
   ];
@@ -35,22 +33,13 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
         index: _currentIndex,
         children: _screens,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (_currentIndex == 1) {
-            // Contextual FAB on Tasks page strictly creates a Task (To-Do)
-            final initialDate = ref.read(selectedTaskDateProvider);
-            CreateTaskSheet.show(context, initialDate: initialDate);
-            return;
-          }
-          QuickCaptureSheet.show(context);
-        },
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, size: 28),
-      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
+          if (index == 2) {
+            QuickActionGridSheet.show(context);
+            return;
+          }
           setState(() => _currentIndex = index);
         },
         destinations: const [
@@ -65,9 +54,9 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
             label: 'Tasks',
           ),
           NavigationDestination(
-            icon: Icon(Icons.school_outlined),
-            selectedIcon: Icon(Icons.school),
-            label: 'Learn',
+            icon: Icon(CupertinoIcons.plus_circle_fill, size: 28, color: AppColors.primaryLight),
+            selectedIcon: Icon(CupertinoIcons.plus_circle_fill, size: 28, color: AppColors.primary),
+            label: 'Add',
           ),
           NavigationDestination(
             icon: Icon(Icons.bolt_outlined),

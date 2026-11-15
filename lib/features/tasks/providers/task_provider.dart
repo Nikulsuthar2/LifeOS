@@ -29,6 +29,18 @@ class CalendarViewTypeNotifier extends Notifier<CalendarViewType> {
 
 final calendarViewTypeProvider = NotifierProvider<CalendarViewTypeNotifier, CalendarViewType>(CalendarViewTypeNotifier.new);
 
+class WeekCalendarExpandedNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void toggle() => state = !state;
+  void setExpanded(bool expanded) => state = expanded;
+}
+
+final weekCalendarExpandedProvider = NotifierProvider<WeekCalendarExpandedNotifier, bool>(
+  WeekCalendarExpandedNotifier.new,
+);
+
 class TaskFilterNotifier extends Notifier<String> {
   @override
   String build() => 'all'; // 'all', 'pending', 'completed', 'inbox'
@@ -120,11 +132,11 @@ final weekTaskDatesProvider = FutureProvider<Set<String>>((ref) async {
   final repo = ref.watch(taskRepositoryProvider);
   final selectedDate = ref.watch(selectedTaskDateProvider);
 
-  // Determine start of week (Monday)
-  final startOfWeek = selectedDate.subtract(Duration(days: selectedDate.weekday - 1));
-  final endOfWeek = startOfWeek.add(const Duration(days: 6));
+  // Cover full month and adjacent padding days so both week and month views have accurate task dots
+  final start = DateTime(selectedDate.year, selectedDate.month - 1, 1);
+  final end = DateTime(selectedDate.year, selectedDate.month + 2, 0);
 
-  return await repo.getTaskDatesForWeek(startOfWeek, endOfWeek);
+  return await repo.getTaskDatesForWeek(start, end);
 });
 
 final topPrioritiesProvider = FutureProvider<List<TaskItem>>((ref) async {

@@ -4,6 +4,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:life_os/core/database/app_database.dart';
 import 'package:life_os/core/models/focus_session.dart';
 import 'package:life_os/core/models/roadmap.dart';
+import 'package:life_os/core/models/task.dart';
 import 'package:life_os/features/learning/repositories/roadmap_repository.dart';
 import 'package:life_os/features/tasks/repositories/task_repository.dart';
 import 'package:life_os/features/track/focus/repositories/focus_repository.dart';
@@ -111,6 +112,35 @@ void main() {
 
       final metrics = await taskRepo.getTodayTaskMetrics();
       expect(metrics['completed'], greaterThan(0));
+    });
+
+    test('Task Recurrence: monthly repeating task appears on Nov 6, Dec 6, Jan 6 and stops after Jan 31', () async {
+      final taskRepo = TaskRepository();
+      final recurringTask = TaskItem(
+        id: 'recurring-monthly-task',
+        title: 'Monthly Financial Audit',
+        dueDate: DateTime(2026, 11, 6),
+        recurrence: 'monthly',
+        recurrenceEndDate: DateTime(2027, 1, 31),
+      );
+
+      await taskRepo.insertTask(recurringTask);
+
+      // Check Nov 6 (start date)
+      final novTasks = await taskRepo.getTasksForDate(DateTime(2026, 11, 6));
+      expect(novTasks.any((t) => t.title == 'Monthly Financial Audit'), isTrue);
+
+      // Check Dec 6 (recurring month 1)
+      final decTasks = await taskRepo.getTasksForDate(DateTime(2026, 12, 6));
+      expect(decTasks.any((t) => t.title == 'Monthly Financial Audit'), isTrue);
+
+      // Check Jan 6 (recurring month 2)
+      final janTasks = await taskRepo.getTasksForDate(DateTime(2027, 1, 6));
+      expect(janTasks.any((t) => t.title == 'Monthly Financial Audit'), isTrue);
+
+      // Check Feb 6 (past recurrenceEndDate of Jan 31)
+      final febTasks = await taskRepo.getTasksForDate(DateTime(2027, 2, 6));
+      expect(febTasks.any((t) => t.title == 'Monthly Financial Audit'), isFalse);
     });
   });
 }

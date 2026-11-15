@@ -10,6 +10,7 @@ import '../../goals/screens/goals_screen.dart';
 import '../../journal/providers/journal_provider.dart';
 import '../../journal/screens/journal_screen.dart';
 import '../../learning/providers/roadmap_provider.dart';
+import '../../learning/screens/roadmaps_screen.dart';
 import '../../tasks/providers/task_provider.dart';
 import '../../track/focus/providers/focus_provider.dart';
 import '../../track/habits/providers/habit_provider.dart';
@@ -364,6 +365,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (context) => const GoalsScreen()));
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.school_outlined, color: AppColors.accent),
+                  title: const Text('Learning & Skills', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Visual skill trees, roadmaps & study topics'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const RoadmapsScreen()));
                   },
                 ),
                 const Divider(height: 1),

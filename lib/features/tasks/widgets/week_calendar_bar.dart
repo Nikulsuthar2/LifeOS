@@ -5,11 +5,11 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../providers/task_provider.dart';
 
-/// Snappy, typography-led 7-day week calendar bar for Life OS.
-/// - Snaps 1 full week (Mon - Sun) per swipe using PageView
-/// - Inherits page background (zero card container separation)
-/// - Dropdown down arrow next to Month/Year opens a full-month quick navigator
-/// - Subtle 'Today' indicator when away from current date
+/// Minimal, Cupertino-inspired Expandable Calendar for Life OS Tasks.
+/// - Collapsed (normal): Shows the snappy 7-day week bar (Mon - Sun).
+/// - Expanded: Seamlessly expands in the exact same component into the full month calendar.
+/// - Mon - Sun columns stay pixel-aligned with smooth squircle day cells.
+/// - Inherits page background (transparent, zero separate card boxes).
 class WeekCalendarBar extends ConsumerStatefulWidget {
   const WeekCalendarBar({super.key});
 
@@ -20,27 +20,34 @@ class WeekCalendarBar extends ConsumerStatefulWidget {
 class _WeekCalendarBarState extends ConsumerState<WeekCalendarBar> {
   static const int _basePage = 5000;
   late final DateTime _anchorMonday;
-  late final PageController _pageController;
-  bool _isMonthExpanded = false;
+  late final DateTime _anchorMonth;
+  late final PageController _weekPageController;
+  late final PageController _monthPageController;
+
+  late DateTime _displayedMonth;
 
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
-    // Monday of the reference week
-    _anchorMonday = DateTime(now.year, now.month, now.day).subtract(
-      Duration(days: now.weekday - 1),
-    );
-    _pageController = PageController(initialPage: _basePage);
+    final today = DateTime(now.year, now.month, now.day);
+    // Monday of reference week
+    _anchorMonday = today.subtract(Duration(days: today.weekday - 1));
+    _anchorMonth = DateTime(now.year, now.month, 1);
+    _displayedMonth = DateTime(now.year, now.month, 1);
+
+    _weekPageController = PageController(initialPage: _basePage);
+    _monthPageController = PageController(initialPage: _basePage);
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _weekPageController.dispose();
+    _monthPageController.dispose();
     super.dispose();
   }
 
-  int _pageForDate(DateTime date) {
+  int _pageForWeek(DateTime date) {
     final monday = DateTime(date.year, date.month, date.day).subtract(
       Duration(days: date.weekday - 1),
     );
@@ -48,32 +55,79 @@ class _WeekCalendarBarState extends ConsumerState<WeekCalendarBar> {
     return _basePage + (diffDays / 7).round();
   }
 
-  DateTime _mondayForPage(int page) {
+  DateTime _mondayForWeekPage(int page) {
     final weekOffset = page - _basePage;
     return _anchorMonday.add(Duration(days: weekOffset * 7));
   }
 
-  void _syncPageWithDate(DateTime date) {
-    final targetPage = _pageForDate(date);
-    if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
-      _pageController.animateToPage(
-        targetPage,
+  int _pageForMonth(DateTime date) {
+    final monthsDiff = (date.year - _anchorMonth.year) * 12 + (date.month - _anchorMonth.month);
+    return _basePage + monthsDiff;
+  }
+
+  DateTime _monthForMonthPage(int page) {
+    final monthOffset = page - _basePage;
+    return DateTime(_anchorMonth.year, _anchorMonth.month + monthOffset, 1);
+  }
+
+  void _syncWithDate(DateTime date) {
+    final targetWeekPage = _pageForWeek(date);
+    if (_weekPageController.hasClients && _weekPageController.page?.round() != targetWeekPage) {
+      _weekPageController.animateToPage(
+        targetWeekPage,
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOutCubic,
       );
     }
+
+    final targetMonthPage = _pageForMonth(date);
+    if (_monthPageController.hasClients && _monthPageController.page?.round() != targetMonthPage) {
+      _monthPageController.animateToPage(
+        targetMonthPage,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+    }
+
+    setState(() {
+      _displayedMonth = DateTime(date.year, date.month, 1);
+    });
+  }
+
+  void _toggleExpanded() {
+    ref.read(weekCalendarExpandedProvider.notifier).toggle();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isExpanded = ref.watch(weekCalendarExpandedProvider);
     final selectedDate = ref.watch(selectedTaskDateProvider);
     final weekTaskDatesAsync = ref.watch(weekTaskDatesProvider);
     final dateNotifier = ref.read(selectedTaskDateProvider.notifier);
 
-    // Sync page if date changed outside this widget
+    // Sync controllers if selected date was changed externally
     ref.listen<DateTime>(selectedTaskDateProvider, (prev, next) {
-      _syncPageWithDate(next);
+      _syncWithDate(next);
+    });
+
+    // Sync controllers if expanded state changed (either via tap or pull-down gesture)
+    ref.listen<bool>(weekCalendarExpandedProvider, (prev, nextExpanded) {
+      final curDate = ref.read(selectedTaskDateProvider);
+      if (nextExpanded) {
+        setState(() {
+          _displayedMonth = DateTime(curDate.year, curDate.month, 1);
+        });
+        final targetMonthPage = _pageForMonth(curDate);
+        if (_monthPageController.hasClients) {
+          _monthPageController.jumpToPage(targetMonthPage);
+        }
+      } else {
+        final targetWeekPage = _pageForWeek(curDate);
+        if (_weekPageController.hasClients) {
+          _weekPageController.jumpToPage(targetWeekPage);
+        }
+      }
     });
 
     final now = DateTime.now();
@@ -82,24 +136,23 @@ class _WeekCalendarBarState extends ConsumerState<WeekCalendarBar> {
         selectedDate.month == today.month &&
         selectedDate.day == today.day;
 
-    final monthYearTitle = DateFormat('MMMM yyyy').format(selectedDate);
+    final titleDate = isExpanded ? _displayedMonth : selectedDate;
+    final monthYearTitle = DateFormat('MMMM yyyy').format(titleDate);
     final taskDates = weekTaskDatesAsync.value ?? <String>{};
 
     return Container(
       color: Colors.transparent, // Seamlessly inherits page background
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 4),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 1. Month / Year title with dropdown arrow + Today pill
+          // 1. Month / Year title with dropdown arrow + Today pill + Chevrons when expanded
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               InkWell(
-                onTap: () {
-                  setState(() => _isMonthExpanded = !_isMonthExpanded);
-                },
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                onTap: _toggleExpanded,
+                borderRadius: BorderRadius.circular(8),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                   child: Row(
@@ -116,7 +169,7 @@ class _WeekCalendarBarState extends ConsumerState<WeekCalendarBar> {
                       ),
                       const SizedBox(width: 4),
                       Icon(
-                        _isMonthExpanded
+                        isExpanded
                             ? Icons.keyboard_arrow_up_rounded
                             : Icons.keyboard_arrow_down_rounded,
                         size: 20,
@@ -126,315 +179,341 @@ class _WeekCalendarBarState extends ConsumerState<WeekCalendarBar> {
                   ),
                 ),
               ),
-              if (!isToday)
-                GestureDetector(
-                  onTap: () {
-                    dateNotifier.jumpToToday();
-                    _syncPageWithDate(today);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
-                      border: Border.all(
-                        color: AppColors.primaryLight.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
+
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Month navigation chevrons when in expanded mode
+                  if (isExpanded) ...[
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left, size: 20),
+                      visualDensity: VisualDensity.compact,
+                      tooltip: 'Previous Month',
+                      onPressed: () {
+                        if (_monthPageController.hasClients) {
+                          _monthPageController.previousPage(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOutCubic,
+                          );
+                        }
+                      },
                     ),
-                    child: const Text(
-                      'Today',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryLight,
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right, size: 20),
+                      visualDensity: VisualDensity.compact,
+                      tooltip: 'Next Month',
+                      onPressed: () {
+                        if (_monthPageController.hasClients) {
+                          _monthPageController.nextPage(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeOutCubic,
+                          );
+                        }
+                      },
                     ),
-                  ),
-                ),
-            ],
-          ),
+                  ],
 
-          // 2. Full Month Collapsible Grid (opened via down arrow)
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 220),
-            crossFadeState:
-                _isMonthExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-            firstChild: const SizedBox.shrink(),
-            secondChild: _MonthGridPicker(
-              selectedDate: selectedDate,
-              onSelectDate: (pickedDate) {
-                dateNotifier.setDate(pickedDate);
-                _syncPageWithDate(pickedDate);
-                setState(() => _isMonthExpanded = false);
-              },
-            ),
-          ),
-
-          const SizedBox(height: AppSpacing.xs),
-
-          // 3. Snappy 7-Day PageView (snaps week by week: Monday to Sunday)
-          SizedBox(
-            height: 64,
-            child: PageView.builder(
-              controller: _pageController,
-              pageSnapping: true,
-              onPageChanged: (pageIndex) {
-                final pageMonday = _mondayForPage(pageIndex);
-                final currentWeekday = selectedDate.weekday; // 1 = Mon ... 7 = Sun
-                final newSelectedDate = pageMonday.add(Duration(days: currentWeekday - 1));
-                dateNotifier.setDate(newSelectedDate);
-              },
-              itemBuilder: (context, pageIndex) {
-                final pageMonday = _mondayForPage(pageIndex);
-                final days = List.generate(7, (i) => pageMonday.add(Duration(days: i)));
-
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: days.map((day) {
-                    final isSelected = day.year == selectedDate.year &&
-                        day.month == selectedDate.month &&
-                        day.day == selectedDate.day;
-                    final isDayToday = day.year == today.year &&
-                        day.month == today.month &&
-                        day.day == today.day;
-                    final dayKey = DateFormat('yyyy-MM-dd').format(day);
-                    final hasTasks = taskDates.contains(dayKey);
-
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              dateNotifier.setDate(day);
-                            },
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            child: AnimatedContainer(
-                              duration: AppDurations.fast,
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : (isDayToday
-                                        ? (isDark ? AppColors.darkCardElevated : AppColors.lightCardElevated)
-                                        : Colors.transparent),
-                                borderRadius: BorderRadius.circular(AppRadius.md),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : (isDayToday
-                                          ? AppColors.primary.withValues(alpha: 0.35)
-                                          : Colors.transparent),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    DateFormat('E').format(day).substring(0, 3).toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.4,
-                                      color: isSelected
-                                          ? Colors.white.withValues(alpha: 0.85)
-                                          : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    '${day.day}',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: isSelected || isDayToday ? FontWeight.w800 : FontWeight.w600,
-                                      color: isSelected
-                                          ? Colors.white
-                                          : (isDayToday
-                                              ? AppColors.primaryLight
-                                              : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary)),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  // Task dot indicator
-                                  Container(
-                                    width: 4,
-                                    height: 4,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: hasTasks
-                                          ? (isSelected ? Colors.white : AppColors.primaryLight)
-                                          : Colors.transparent,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                  if (!isToday) ...[
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: () {
+                        dateNotifier.jumpToToday();
+                        _syncWithDate(today);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
+                            color: AppColors.primaryLight.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Text(
+                          'Today',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryLight,
                           ),
                         ),
                       ),
-                    );
-                  }).toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+
+          // 2. Fixed 7-Column Weekday Header Bar (MON, TUE, WED, THU, FRI, SAT, SUN)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, bottom: 4),
+            child: Row(
+              children: const ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((dayName) {
+                return Expanded(
+                  child: Center(
+                    child: Text(
+                      dayName,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
+                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                      ),
+                    ),
+                  ),
                 );
-              },
+              }).toList(),
+            ),
+          ),
+
+          // 3. Calendar Days Area: Animated expansion between 1 Week (48px) and Full Month (260px)
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 240),
+            firstCurve: Curves.easeOutCubic,
+            secondCurve: Curves.easeOutCubic,
+            sizeCurve: Curves.easeInOutCubic,
+            crossFadeState: isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+            firstChild: _buildWeekView(today, selectedDate, taskDates, dateNotifier),
+            secondChild: _buildMonthView(today, selectedDate, taskDates, dateNotifier),
+          ),
+
+          // 4. Subtle Hairline Drag / Tap Handle
+          GestureDetector(
+            onTap: _toggleExpanded,
+            child: Container(
+              color: Colors.transparent,
+              padding: const EdgeInsets.only(top: 4, bottom: 2),
+              alignment: Alignment.center,
+              child: Container(
+                width: 32,
+                height: 3.5,
+                decoration: BoxDecoration(
+                  color: (isDark ? AppColors.darkBorder : AppColors.lightBorder).withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
   }
-}
 
-/// Compact inline month calendar view displayed when expanding the month dropdown.
-class _MonthGridPicker extends StatefulWidget {
-  final DateTime selectedDate;
-  final ValueChanged<DateTime> onSelectDate;
+  // --- Collapsed 1-Week PageView (snaps 7 days Mon-Sun per swipe) ---
+  Widget _buildWeekView(
+    DateTime today,
+    DateTime selectedDate,
+    Set<String> taskDates,
+    SelectedTaskDateNotifier dateNotifier,
+  ) {
+    return SizedBox(
+      height: 48,
+      child: PageView.builder(
+        controller: _weekPageController,
+        pageSnapping: true,
+        onPageChanged: (pageIndex) {
+          final pageMonday = _mondayForWeekPage(pageIndex);
+          final currentWeekday = selectedDate.weekday; // 1 = Mon ... 7 = Sun
+          final newSelectedDate = pageMonday.add(Duration(days: currentWeekday - 1));
+          dateNotifier.setDate(newSelectedDate);
+          setState(() {
+            _displayedMonth = DateTime(newSelectedDate.year, newSelectedDate.month, 1);
+          });
+        },
+        itemBuilder: (context, pageIndex) {
+          final pageMonday = _mondayForWeekPage(pageIndex);
+          final days = List.generate(7, (i) => pageMonday.add(Duration(days: i)));
 
-  const _MonthGridPicker({
-    required this.selectedDate,
-    required this.onSelectDate,
-  });
+          return Row(
+            children: days.map((day) {
+              final isSelected = day.year == selectedDate.year &&
+                  day.month == selectedDate.month &&
+                  day.day == selectedDate.day;
+              final isDayToday = day.year == today.year &&
+                  day.month == today.month &&
+                  day.day == today.day;
+              final dayKey = DateFormat('yyyy-MM-dd').format(day);
+              final hasTasks = taskDates.contains(dayKey);
 
-  @override
-  State<_MonthGridPicker> createState() => _MonthGridPickerState();
-}
-
-class _MonthGridPickerState extends State<_MonthGridPicker> {
-  late DateTime _displayedMonth;
-
-  @override
-  void initState() {
-    super.initState();
-    _displayedMonth = DateTime(widget.selectedDate.year, widget.selectedDate.month, 1);
+              return _DayCell(
+                day: day,
+                isSelected: isSelected,
+                isToday: isDayToday,
+                isCurrentMonth: true,
+                hasTasks: hasTasks,
+                onTap: () {
+                  dateNotifier.setDate(day);
+                  setState(() {
+                    _displayedMonth = DateTime(day.year, day.month, 1);
+                  });
+                },
+              );
+            }).toList(),
+          );
+        },
+      ),
+    );
   }
+
+  // --- Expanded Full Month PageView (snaps month per swipe, rows of 7 days) ---
+  Widget _buildMonthView(
+    DateTime today,
+    DateTime selectedDate,
+    Set<String> taskDates,
+    SelectedTaskDateNotifier dateNotifier,
+  ) {
+    return SizedBox(
+      height: 260,
+      child: PageView.builder(
+        controller: _monthPageController,
+        pageSnapping: true,
+        onPageChanged: (pageIndex) {
+          final month = _monthForMonthPage(pageIndex);
+          setState(() => _displayedMonth = month);
+        },
+        itemBuilder: (context, pageIndex) {
+          final monthFirst = _monthForMonthPage(pageIndex);
+          final weekdayOfFirst = monthFirst.weekday; // 1 = Mon ... 7 = Sun
+          final firstMonday = monthFirst.subtract(Duration(days: weekdayOfFirst - 1));
+          final daysInMonth = DateTime(monthFirst.year, monthFirst.month + 1, 0).day;
+          final totalDays = (weekdayOfFirst - 1) + daysInMonth;
+          final totalWeeks = (totalDays / 7.0).ceil();
+
+          return Column(
+            children: List.generate(totalWeeks, (weekIdx) {
+              final weekStart = firstMonday.add(Duration(days: weekIdx * 7));
+              final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
+
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Row(
+                    children: days.map((day) {
+                      final isSelected = day.year == selectedDate.year &&
+                          day.month == selectedDate.month &&
+                          day.day == selectedDate.day;
+                      final isDayToday = day.year == today.year &&
+                          day.month == today.month &&
+                          day.day == today.day;
+                      final isCurrentMonth = day.month == monthFirst.month;
+                      final dayKey = DateFormat('yyyy-MM-dd').format(day);
+                      final hasTasks = taskDates.contains(dayKey);
+
+                      return _DayCell(
+                        day: day,
+                        isSelected: isSelected,
+                        isToday: isDayToday,
+                        isCurrentMonth: isCurrentMonth,
+                        hasTasks: hasTasks,
+                        onTap: () {
+                          dateNotifier.setDate(day);
+                          _syncWithDate(day);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              );
+            }),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Unified, minimal Cupertino day cell for both Week Bar (collapsed) and Month Calendar (expanded).
+class _DayCell extends StatelessWidget {
+  final DateTime day;
+  final bool isSelected;
+  final bool isToday;
+  final bool isCurrentMonth;
+  final bool hasTasks;
+  final VoidCallback onTap;
+
+  const _DayCell({
+    required this.day,
+    required this.isSelected,
+    required this.isToday,
+    required this.isCurrentMonth,
+    required this.hasTasks,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
 
-    final firstDayOfMonth = DateTime(_displayedMonth.year, _displayedMonth.month, 1);
-    final daysInMonth = DateTime(_displayedMonth.year, _displayedMonth.month + 1, 0).day;
-    // 1 = Monday ... 7 = Sunday
-    final startingWeekday = firstDayOfMonth.weekday;
-
-    final prevMonth = DateTime(_displayedMonth.year, _displayedMonth.month - 1, 1);
-    final nextMonth = DateTime(_displayedMonth.year, _displayedMonth.month + 1, 1);
-
-    return Container(
-      margin: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xs),
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.lightCard,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          // Month navigation header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left, size: 20),
-                visualDensity: VisualDensity.compact,
-                onPressed: () {
-                  setState(() => _displayedMonth = prevMonth);
-                },
-              ),
-              Text(
-                DateFormat('MMMM yyyy').format(_displayedMonth),
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right, size: 20),
-                visualDensity: VisualDensity.compact,
-                onPressed: () {
-                  setState(() => _displayedMonth = nextMonth);
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-
-          // Weekday initials (Mon to Sun)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((letter) {
-              return SizedBox(
-                width: 32,
-                child: Text(
-                  letter,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryLight,
-                  ),
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(10),
+            child: AnimatedContainer(
+              duration: AppDurations.fast,
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.primary
+                    : (isToday
+                        ? (isDark ? const Color(0xFF1C1C20) : const Color(0xFFEBEBF0))
+                        : Colors.transparent),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.primary
+                      : (isToday
+                          ? AppColors.primaryLight.withValues(alpha: 0.4)
+                          : Colors.transparent),
+                  width: 1,
                 ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 6),
-
-          // Days grid
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: (startingWeekday - 1) + daysInMonth,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              mainAxisSpacing: 4,
-              crossAxisSpacing: 4,
-              childAspectRatio: 1.2,
-            ),
-            itemBuilder: (context, index) {
-              if (index < startingWeekday - 1) {
-                return const SizedBox.shrink();
-              }
-              final dayNumber = index - (startingWeekday - 1) + 1;
-              final cellDate = DateTime(_displayedMonth.year, _displayedMonth.month, dayNumber);
-              final isSelected = cellDate.year == widget.selectedDate.year &&
-                  cellDate.month == widget.selectedDate.month &&
-                  cellDate.day == widget.selectedDate.day;
-              final isCellToday = cellDate.year == today.year &&
-                  cellDate.month == today.month &&
-                  cellDate.day == today.day;
-
-              return InkWell(
-                onTap: () => widget.onSelectDate(cellDate),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: Container(
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    border: isCellToday && !isSelected
-                        ? Border.all(color: AppColors.primaryLight, width: 1)
-                        : null,
-                  ),
-                  child: Text(
-                    '$dayNumber',
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '${day.day}',
                     style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isSelected || isCellToday ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 14,
+                      fontWeight: isSelected || isToday
+                          ? FontWeight.w800
+                          : (isCurrentMonth ? FontWeight.w600 : FontWeight.w400),
                       color: isSelected
                           ? Colors.white
-                          : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                          : (isToday
+                              ? AppColors.primaryLight
+                              : (!isCurrentMonth
+                                  ? (isDark
+                                      ? AppColors.darkTextMuted.withValues(alpha: 0.35)
+                                      : AppColors.lightTextMuted.withValues(alpha: 0.35))
+                                  : (isDark
+                                      ? AppColors.darkTextPrimary
+                                      : AppColors.lightTextPrimary))),
                     ),
                   ),
-                ),
-              );
-            },
+                  const SizedBox(height: 3),
+                  // Task dot indicator
+                  Container(
+                    width: 3.5,
+                    height: 3.5,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: hasTasks
+                          ? (isSelected ? Colors.white : AppColors.primaryLight)
+                          : Colors.transparent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
