@@ -52,12 +52,17 @@ class DatabaseSchema {
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       description TEXT,
-      category TEXT DEFAULT 'General',
+      category TEXT DEFAULT 'Health',
       tracking_type TEXT DEFAULT 'boolean',
       target_value REAL DEFAULT 1.0,
       unit TEXT DEFAULT 'times',
       frequency TEXT DEFAULT 'daily',
-      icon TEXT DEFAULT 'check_circle_outline',
+      days_of_week TEXT DEFAULT '[1,2,3,4,5,6,7]',
+      time_of_day TEXT DEFAULT 'all',
+      priority TEXT DEFAULT 'medium',
+      start_date TEXT,
+      end_date TEXT,
+      icon TEXT DEFAULT 'bolt',
       color INTEGER DEFAULT 4284704497,
       is_archived INTEGER DEFAULT 0,
       created_at TEXT NOT NULL
@@ -70,6 +75,7 @@ class DatabaseSchema {
       date_str TEXT NOT NULL,
       value REAL DEFAULT 0.0,
       is_completed INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'pending',
       notes TEXT,
       FOREIGN KEY (habit_id) REFERENCES habits (id) ON DELETE CASCADE
     );

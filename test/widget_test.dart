@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:life_os/core/models/habit.dart';
 import 'package:life_os/core/models/task.dart';
 import 'package:life_os/core/widgets/metric_card.dart';
 import 'package:life_os/core/widgets/priority_badge.dart';
@@ -12,6 +13,10 @@ import 'package:life_os/features/tasks/widgets/task_calendar_view.dart';
 import 'package:life_os/features/tasks/widgets/task_card.dart';
 import 'package:life_os/features/tasks/widgets/task_view_sheet.dart';
 import 'package:life_os/features/tasks/widgets/week_calendar_bar.dart';
+import 'package:life_os/features/track/habits/repositories/habit_repository.dart';
+import 'package:life_os/features/track/habits/widgets/habit_card.dart';
+import 'package:life_os/features/track/habits/widgets/habit_view_sheet.dart';
+import 'package:life_os/shared/shell/main_navigation_shell.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -179,29 +184,25 @@ void main() {
     expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
   });
 
-  testWidgets('MainNavigationShell renders 5 destinations with center Add button', (WidgetTester tester) async {
+  testWidgets('MainNavigationShell renders glassmorphic bar with Home, Tasks, Habits, More and prominent center Add button without Add label', (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: NavigationBar(
-            destinations: const [
-              NavigationDestination(icon: Icon(Icons.dashboard_outlined), label: 'Home'),
-              NavigationDestination(icon: Icon(Icons.check_circle_outline), label: 'Tasks'),
-              NavigationDestination(icon: Icon(Icons.add_circle), label: 'Add'),
-              NavigationDestination(icon: Icon(Icons.bolt_outlined), label: 'Track'),
-              NavigationDestination(icon: Icon(Icons.more_horiz), label: 'More'),
-            ],
-          ),
+      const ProviderScope(
+        child: MaterialApp(
+          home: MainNavigationShell(),
         ),
       ),
     );
     await tester.pump();
 
+    // Verify 4 tab destination labels are present
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Tasks'), findsOneWidget);
-    expect(find.text('Add'), findsOneWidget);
-    expect(find.text('Track'), findsOneWidget);
+    expect(find.text('Habits'), findsOneWidget);
     expect(find.text('More'), findsOneWidget);
+
+    // Verify prominent center Add button with add_rounded icon and hidden text label
+    expect(find.byIcon(Icons.add_rounded), findsOneWidget);
+    expect(find.text('Add'), findsNothing);
   });
 
   testWidgets('TaskViewSheet renders read-only task details and two action buttons', (WidgetTester tester) async {
@@ -270,5 +271,153 @@ void main() {
 
     // Now expanded to month (up arrow visible)
     expect(find.byIcon(Icons.keyboard_arrow_up_rounded), findsOneWidget);
+  });
+
+  testWidgets('HabitCard displays title, frequency, 7 days of week, and action buttons', (WidgetTester tester) async {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekDays = List.generate(7, (i) => monday.add(Duration(days: i)));
+
+    final habitWithStatus = HabitWithStatus(
+      habit: Habit(
+        id: 'habit-test-1',
+        title: 'Morning 5km Run',
+        category: 'Sport',
+        frequency: 'daily',
+        timeOfDay: 'morning',
+        startDate: monday.subtract(const Duration(days: 10)),
+      ),
+      todayStatus: HabitDayStatus.done,
+      streakDays: 5,
+      bestStreakDays: 14,
+      weekDays: weekDays,
+      weekStatuses: const [
+        HabitDayStatus.done,
+        HabitDayStatus.done,
+        HabitDayStatus.done,
+        HabitDayStatus.fail,
+        HabitDayStatus.done,
+        HabitDayStatus.pending,
+        HabitDayStatus.pending,
+      ],
+      weekDayEnabled: const [true, true, true, true, true, true, true],
+      weekCompletedCount: 4,
+      weekEnabledCount: 7,
+      weekPercentage: 57,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: HabitCard(habitWithStatus: habitWithStatus),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Verify Habit Title and Frequency Subtitle
+    expect(find.text('Morning 5km Run'), findsOneWidget);
+    expect(find.text('Everyday · Morning'), findsOneWidget);
+    expect(find.text('🔥 5d'), findsOneWidget);
+
+    // Verify bottom count and percentage
+    expect(find.text('4/7 days · 57%'), findsOneWidget);
+
+    // Verify action buttons exist
+    expect(find.byIcon(Icons.more_vert), findsOneWidget);
+  });
+
+  testWidgets('HabitViewSheet displays quick details, states, and 3 detail navigation buttons', (WidgetTester tester) async {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekDays = List.generate(7, (i) => monday.add(Duration(days: i)));
+
+    final habitWithStatus = HabitWithStatus(
+      habit: Habit(
+        id: 'habit-test-2',
+        title: 'Daily Meditation',
+        description: 'Mindful breathing for 15 minutes',
+        category: 'Meditation',
+        frequency: 'daily',
+        timeOfDay: 'morning',
+      ),
+      todayStatus: HabitDayStatus.done,
+      streakDays: 7,
+      bestStreakDays: 21,
+      weekDays: weekDays,
+      weekStatuses: List.filled(7, HabitDayStatus.done),
+      weekDayEnabled: List.filled(7, true),
+      weekCompletedCount: 7,
+      weekEnabledCount: 7,
+      weekPercentage: 100,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: HabitViewSheet(habitWithStatus: habitWithStatus),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Verify Title & description
+    expect(find.text('Daily Meditation'), findsOneWidget);
+    expect(find.text('Mindful breathing for 15 minutes'), findsOneWidget);
+
+    // Verify 3 prominent buttons: Calendar, Statistics, Edit
+    expect(find.text('Calendar'), findsOneWidget);
+    expect(find.text('Statistics'), findsOneWidget);
+    expect(find.text('Edit'), findsOneWidget);
+  });
+
+  testWidgets('HabitCard in collapsed mode renders compact header and single 3-state checkbox without 7 weekdays row', (WidgetTester tester) async {
+    final now = DateTime.now();
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final weekDays = List.generate(7, (i) => monday.add(Duration(days: i)));
+
+    final habitWithStatus = HabitWithStatus(
+      habit: Habit(
+        id: 'habit-collapsed-test',
+        title: 'Drink 2.5L Water',
+        category: 'Health',
+        frequency: 'daily',
+        timeOfDay: 'afternoon',
+      ),
+      todayStatus: HabitDayStatus.done,
+      streakDays: 4,
+      bestStreakDays: 10,
+      weekDays: weekDays,
+      weekStatuses: List.filled(7, HabitDayStatus.done),
+      weekDayEnabled: List.filled(7, true),
+      weekCompletedCount: 1,
+      weekEnabledCount: 1,
+      weekPercentage: 100,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: HabitCard(habitWithStatus: habitWithStatus, isCollapsed: true),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Verify Habit Title and Frequency Subtitle
+    expect(find.text('Drink 2.5L Water'), findsOneWidget);
+    expect(find.text('Everyday · Afternoon'), findsOneWidget);
+
+    // Verify single 3-state checkbox is rendered with done icon (check)
+    expect(find.byIcon(Icons.check), findsOneWidget);
+
+    // Verify 7 weekdays and bottom action buttons are NOT present in collapsed mode
+    expect(find.byIcon(Icons.more_vert), findsNothing);
   });
 }

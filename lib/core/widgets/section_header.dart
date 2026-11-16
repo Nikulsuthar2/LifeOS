@@ -59,7 +59,7 @@ class SectionHeader extends StatelessWidget {
               style: TextButton.styleFrom(
                 visualDensity: VisualDensity.compact,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                foregroundColor: AppColors.primaryLight,
+                foregroundColor: Theme.of(context).colorScheme.primary,
               ),
               child: Text(
                 actionLabel!,

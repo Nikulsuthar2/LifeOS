@@ -6,6 +6,7 @@ import '../../../core/models/task.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../track/focus/providers/focus_provider.dart';
+import '../../track/focus/screens/focus_screen.dart';
 import '../models/recurrence_engine.dart';
 import '../providers/task_provider.dart';
 import '../screens/task_detail_screen.dart';
@@ -92,6 +93,7 @@ class _TaskViewSheetState extends ConsumerState<TaskViewSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
     final priorityColor = _getPriorityColor(_task.priority);
     final completedSubtasksCount = _subtasks.where((s) => s.isCompleted).length;
 
@@ -172,22 +174,22 @@ class _TaskViewSheetState extends ConsumerState<TaskViewSheet> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.15),
+                        color: primary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.3)),
+                        border: Border.all(color: primary.withValues(alpha: 0.3)),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(CupertinoIcons.star_fill, size: 10, color: AppColors.primaryLight),
-                          SizedBox(width: 4),
+                          Icon(CupertinoIcons.star_fill, size: 10, color: primary),
+                          const SizedBox(width: 4),
                           Text(
                             'TOP FOCUS',
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.4,
-                              color: AppColors.primaryLight,
+                              color: primary,
                             ),
                           ),
                         ],
@@ -421,7 +423,7 @@ class _TaskViewSheetState extends ConsumerState<TaskViewSheet> {
                           _buildDetailRow(
                             isDark: isDark,
                             icon: CupertinoIcons.calendar,
-                            iconColor: AppColors.primaryLight,
+                            iconColor: primary,
                             label: 'Date & Time',
                             value: _task.dueDate != null
                                 ? (_task.isAllDay
@@ -502,15 +504,10 @@ class _TaskViewSheetState extends ConsumerState<TaskViewSheet> {
                         Navigator.pop(context);
                         ref.read(focusTimerProvider.notifier).linkTask(_task.id, _task.title);
                         ref.read(focusTimerProvider.notifier).start();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Pomodoro session started for "${_task.title}"!'),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
+                        FocusScreen.open(context);
                       },
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primaryLight,
+                        foregroundColor: primary,
                         side: BorderSide(
                           color: isDark ? const Color(0xFF323238) : const Color(0xFFD1D1D6),
                           width: 1,
@@ -538,7 +535,7 @@ class _TaskViewSheetState extends ConsumerState<TaskViewSheet> {
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: primary,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 13),

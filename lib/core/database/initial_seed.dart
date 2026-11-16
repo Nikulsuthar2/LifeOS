@@ -360,19 +360,25 @@ class InitialDatabaseSeed {
     final h4 = uuid.v4();
     final h5 = uuid.v4();
 
+    final habitStartDate = DateFormat('yyyy-MM-dd').format(now.subtract(const Duration(days: 4)));
+
     await db.insert('habits', {
       'id': h1,
       'title': 'Morning Deep Work',
       'description': 'Uninterrupted 45 min focus block.',
-      'category': 'Learning',
+      'category': 'Study',
       'tracking_type': 'boolean',
       'target_value': 1.0,
       'unit': 'session',
       'frequency': 'daily',
+      'days_of_week': '[1,2,3,4,5,6,7]',
+      'time_of_day': 'morning',
+      'priority': 'high',
+      'start_date': habitStartDate,
       'icon': 'bolt',
       'color': 0xFF6366F1,
       'is_archived': 0,
-      'created_at': now.subtract(const Duration(days: 30)).toIso8601String(),
+      'created_at': now.subtract(const Duration(days: 4)).toIso8601String(),
     });
     await db.insert('habits', {
       'id': h2,
@@ -383,24 +389,32 @@ class InitialDatabaseSeed {
       'target_value': 1.0,
       'unit': 'session',
       'frequency': 'daily',
+      'days_of_week': '[1,2,3,4,5,6,7]',
+      'time_of_day': 'morning',
+      'priority': 'medium',
+      'start_date': habitStartDate,
       'icon': 'fitness_center',
       'color': 0xFF10B981,
       'is_archived': 0,
-      'created_at': now.subtract(const Duration(days: 30)).toIso8601String(),
+      'created_at': now.subtract(const Duration(days: 4)).toIso8601String(),
     });
     await db.insert('habits', {
       'id': h3,
       'title': 'Read Books & Papers',
       'description': 'Target at least 15 pages a day.',
-      'category': 'Learning',
+      'category': 'Reading',
       'tracking_type': 'numeric',
       'target_value': 15.0,
       'unit': 'pages',
       'frequency': 'daily',
+      'days_of_week': '[1,2,3,4,5,6,7]',
+      'time_of_day': 'afternoon',
+      'priority': 'medium',
+      'start_date': todayStr,
       'icon': 'menu_book',
-      'color': 0xFF38BDF8,
+      'color': 0xFFA855F7,
       'is_archived': 0,
-      'created_at': now.subtract(const Duration(days: 30)).toIso8601String(),
+      'created_at': now.toIso8601String(),
     });
     await db.insert('habits', {
       'id': h4,
@@ -411,24 +425,32 @@ class InitialDatabaseSeed {
       'target_value': 2.5,
       'unit': 'L',
       'frequency': 'daily',
+      'days_of_week': '[1,2,3,4,5,6,7]',
+      'time_of_day': 'afternoon',
+      'priority': 'low',
+      'start_date': todayStr,
       'icon': 'water_drop',
       'color': 0xFF0EA5E9,
       'is_archived': 0,
-      'created_at': now.subtract(const Duration(days: 30)).toIso8601String(),
+      'created_at': now.toIso8601String(),
     });
     await db.insert('habits', {
       'id': h5,
       'title': 'Evening Reflection & Review',
       'description': 'Reflect on wins, improvements and plan tomorrow.',
-      'category': 'Mind',
+      'category': 'Meditation',
       'tracking_type': 'boolean',
       'target_value': 1.0,
       'unit': 'reflection',
       'frequency': 'daily',
+      'days_of_week': '[1,2,3,4,5,6,7]',
+      'time_of_day': 'evening',
+      'priority': 'medium',
+      'start_date': todayStr,
       'icon': 'auto_awesome',
-      'color': 0xFFF59E0B,
+      'color': 0xFF8B5CF6,
       'is_archived': 0,
-      'created_at': now.subtract(const Duration(days: 30)).toIso8601String(),
+      'created_at': now.toIso8601String(),
     });
 
     // Seed habit logs for today (3 of 5 completed)
@@ -438,6 +460,7 @@ class InitialDatabaseSeed {
       'date_str': todayStr,
       'value': 1.0,
       'is_completed': 1,
+      'status': 'done',
     });
     await db.insert('habit_logs', {
       'id': h4,
@@ -445,6 +468,7 @@ class InitialDatabaseSeed {
       'date_str': todayStr,
       'value': 2.5,
       'is_completed': 1,
+      'status': 'done',
     });
     await db.insert('habit_logs', {
       'id': uuid.v4(),
@@ -452,6 +476,7 @@ class InitialDatabaseSeed {
       'date_str': todayStr,
       'value': 15.0,
       'is_completed': 1,
+      'status': 'done',
     });
 
     // Seed habit logs for past 4 days so streak is visible
@@ -463,6 +488,7 @@ class InitialDatabaseSeed {
         'date_str': pastDate,
         'value': 1.0,
         'is_completed': 1,
+        'status': 'done',
       });
       await db.insert('habit_logs', {
         'id': uuid.v4(),
@@ -470,6 +496,7 @@ class InitialDatabaseSeed {
         'date_str': pastDate,
         'value': 1.0,
         'is_completed': 1,
+        'status': 'done',
       });
       await db.insert('habit_logs', {
         'id': uuid.v4(),
@@ -477,6 +504,7 @@ class InitialDatabaseSeed {
         'date_str': pastDate,
         'value': 15.0,
         'is_completed': 1,
+        'status': 'done',
       });
       await db.insert('habit_logs', {
         'id': uuid.v4(),

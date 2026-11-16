@@ -19,10 +19,19 @@ class AppTheme {
       colorScheme: ColorScheme.dark(
         primary: primary,
         onPrimary: Colors.white,
+        primaryContainer: primary.withValues(alpha: 0.22),
+        onPrimaryContainer: Colors.white,
         secondary: secondary,
+        onSecondary: Colors.white,
+        secondaryContainer: secondary.withValues(alpha: 0.2),
+        onSecondaryContainer: Colors.white,
         surface: AppColors.darkSurface,
-        surfaceContainerHighest: AppColors.darkCardElevated,
+        surfaceContainerLow: const Color(0xFF0F0F12),
+        surfaceContainer: AppColors.darkCard,
+        surfaceContainerHigh: AppColors.darkCardElevated,
+        surfaceContainerHighest: const Color(0xFF222226),
         outline: AppColors.darkBorder,
+        outlineVariant: AppColors.darkBorderSubtle,
       ),
       cardTheme: CardThemeData(
         color: AppColors.darkCard,
@@ -135,10 +144,19 @@ class AppTheme {
       colorScheme: ColorScheme.light(
         primary: primary,
         onPrimary: Colors.white,
+        primaryContainer: primary.withValues(alpha: 0.14),
+        onPrimaryContainer: primary,
         secondary: secondary,
+        onSecondary: Colors.white,
+        secondaryContainer: secondary.withValues(alpha: 0.12),
+        onSecondaryContainer: secondary,
         surface: AppColors.lightSurface,
-        surfaceContainerHighest: AppColors.lightCardElevated,
+        surfaceContainerLow: const Color(0xFFFAFAFC),
+        surfaceContainer: AppColors.lightCard,
+        surfaceContainerHigh: AppColors.lightCardElevated,
+        surfaceContainerHighest: const Color(0xFFEBEBF0),
         outline: AppColors.lightBorder,
+        outlineVariant: AppColors.lightBorderSubtle,
       ),
       cardTheme: CardThemeData(
         color: AppColors.lightCard,
@@ -239,3 +257,11 @@ class AppTheme {
     );
   }
 }
+
+extension ThemeContextExt on BuildContext {
+  ThemeData get theme => Theme.of(this);
+  ColorScheme get colorScheme => theme.colorScheme;
+  Color get primaryColor => colorScheme.primary;
+  bool get isDark => theme.brightness == Brightness.dark;
+}
+

@@ -99,6 +99,24 @@ class AppDatabase {
       await db.execute('ALTER TABLE tasks ADD COLUMN recurrence_end_date TEXT');
     } catch (_) {}
     try {
+      await db.execute('ALTER TABLE habits ADD COLUMN start_date TEXT');
+    } catch (_) {}
+    try {
+      await db.execute('ALTER TABLE habits ADD COLUMN end_date TEXT');
+    } catch (_) {}
+    try {
+      await db.execute("ALTER TABLE habits ADD COLUMN time_of_day TEXT DEFAULT 'all'");
+    } catch (_) {}
+    try {
+      await db.execute("ALTER TABLE habits ADD COLUMN priority TEXT DEFAULT 'medium'");
+    } catch (_) {}
+    try {
+      await db.execute("ALTER TABLE habits ADD COLUMN days_of_week TEXT DEFAULT '[1,2,3,4,5,6,7]'");
+    } catch (_) {}
+    try {
+      await db.execute("ALTER TABLE habit_logs ADD COLUMN status TEXT DEFAULT 'pending'");
+    } catch (_) {}
+    try {
       await db.execute('''
         CREATE TABLE IF NOT EXISTS task_templates (
           id TEXT PRIMARY KEY,
@@ -111,6 +129,23 @@ class AppDatabase {
           subtasks_json TEXT,
           created_at TEXT NOT NULL
         )
+      ''');
+    } catch (_) {}
+    try {
+      // Align start_date for habits where start_date is null, empty, or precedes the earliest recorded log.
+      // For habits with logs, align start_date to earliest log date if artificially set earlier
+      await db.execute('''
+        UPDATE habits 
+        SET start_date = (SELECT MIN(date_str) FROM habit_logs WHERE habit_id = habits.id)
+        WHERE id IN (SELECT habit_id FROM habit_logs)
+          AND (start_date IS NULL OR start_date = '' OR start_date < (SELECT MIN(date_str) FROM habit_logs WHERE habit_id = habits.id));
+      ''');
+      // For habits with no logs at all, ensure start_date is today instead of distant seed past
+      await db.execute('''
+        UPDATE habits 
+        SET start_date = date('now', 'localtime')
+        WHERE id NOT IN (SELECT DISTINCT habit_id FROM habit_logs)
+          AND (start_date IS NULL OR start_date = '' OR start_date < date('now', 'localtime'));
       ''');
     } catch (_) {}
     await _seedDefaultTemplatesIfEmpty(db);

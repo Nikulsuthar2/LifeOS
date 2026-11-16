@@ -101,6 +101,7 @@ class _WeekCalendarBarState extends ConsumerState<WeekCalendarBar> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
     final isExpanded = ref.watch(weekCalendarExpandedProvider);
     final selectedDate = ref.watch(selectedTaskDateProvider);
     final weekTaskDatesAsync = ref.watch(weekTaskDatesProvider);
@@ -223,19 +224,19 @@ class _WeekCalendarBarState extends ConsumerState<WeekCalendarBar> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
+                          color: primary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
-                            color: AppColors.primaryLight.withValues(alpha: 0.3),
+                            color: primary.withValues(alpha: 0.35),
                             width: 1,
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Today',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.primaryLight,
+                            color: primary,
                           ),
                         ),
                       ),
@@ -445,6 +446,7 @@ class _DayCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Expanded(
       child: Padding(
@@ -459,16 +461,16 @@ class _DayCell extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.primary
+                    ? primary
                     : (isToday
                         ? (isDark ? const Color(0xFF1C1C20) : const Color(0xFFEBEBF0))
                         : Colors.transparent),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isSelected
-                      ? AppColors.primary
+                      ? primary
                       : (isToday
-                          ? AppColors.primaryLight.withValues(alpha: 0.4)
+                          ? primary.withValues(alpha: 0.45)
                           : Colors.transparent),
                   width: 1,
                 ),
@@ -487,7 +489,7 @@ class _DayCell extends StatelessWidget {
                       color: isSelected
                           ? Colors.white
                           : (isToday
-                              ? AppColors.primaryLight
+                              ? primary
                               : (!isCurrentMonth
                                   ? (isDark
                                       ? AppColors.darkTextMuted.withValues(alpha: 0.35)
@@ -505,7 +507,7 @@ class _DayCell extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: hasTasks
-                          ? (isSelected ? Colors.white : AppColors.primaryLight)
+                          ? (isSelected ? Colors.white : primary)
                           : Colors.transparent,
                     ),
                   ),

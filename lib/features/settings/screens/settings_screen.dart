@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,11 +7,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../goals/providers/goal_provider.dart';
-import '../../goals/screens/goals_screen.dart';
 import '../../journal/providers/journal_provider.dart';
-import '../../journal/screens/journal_screen.dart';
 import '../../learning/providers/roadmap_provider.dart';
-import '../../learning/screens/roadmaps_screen.dart';
 import '../../tasks/providers/task_provider.dart';
 import '../../track/focus/providers/focus_provider.dart';
 import '../../track/habits/providers/habit_provider.dart';
@@ -172,22 +170,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
     final themeSettings = ref.watch(themeSettingsProvider);
     final themeNotifier = ref.read(themeSettingsProvider.notifier);
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
-        title: const Text('More & Settings'),
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        scrolledUnderElevation: 0,
+        title: const Text(
+          'Settings',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 88),
         children: [
           // 1. Appearance & Theme Settings
           Text(
-            'Appearance & Theme',
+            'APPEARANCE & THEME',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
               color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
             ),
           ),
@@ -276,12 +291,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.info.withValues(alpha: 0.15),
+                            color: primary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Dynamic Active',
-                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.info),
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: primary),
                           ),
                         ),
                     ],
@@ -338,66 +353,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: AppSpacing.xl),
 
-          // 2. Life Modules Navigation Section
+          // 2. Data & Storage Section (Local-first & Backup)
           Text(
-            'Life Modules',
+            'DATA & PRIVACY (LOCAL-FIRST)',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-
-          Material(
-            color: isDark ? AppColors.darkCard : AppColors.lightCard,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              side: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.flag_outlined, color: AppColors.primaryLight),
-                  title: const Text('Goals & Projects', style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Long-term direction, milestones & projects'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const GoalsScreen()));
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.school_outlined, color: AppColors.accent),
-                  title: const Text('Learning & Skills', style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Visual skill trees, roadmaps & study topics'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const RoadmapsScreen()));
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.auto_stories_outlined, color: AppColors.secondary),
-                  title: const Text('Journal & Reflection', style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Daily review, lessons learned & notes'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const JournalScreen()));
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-
-          // 3. Data & Storage Section (Local-first & Backup)
-          Text(
-            'Data & Privacy (Local-First)',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
               color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
             ),
           ),
@@ -437,17 +399,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: AppSpacing.xxl),
 
-          // 4. App Info
+          // 3. App Info
           Center(
             child: Column(
               children: [
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.15),
+                    color: primary.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.all_inclusive, size: 28, color: AppColors.primaryLight),
+                  child: Icon(Icons.all_inclusive, size: 28, color: primary),
                 ),
                 const SizedBox(height: 10),
                 const Text(

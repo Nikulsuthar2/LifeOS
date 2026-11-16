@@ -53,6 +53,7 @@ class DailyProgressSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
     final momentumPercent = (overallMomentum * 100).round();
 
     return Container(
@@ -81,7 +82,7 @@ class DailyProgressSummary extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: momentumPercent >= 80
                           ? AppColors.success
-                          : (momentumPercent >= 40 ? AppColors.primaryLight : AppColors.medium),
+                          : (momentumPercent >= 40 ? primary : AppColors.medium),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
@@ -116,7 +117,7 @@ class DailyProgressSummary extends StatelessWidget {
               minHeight: 5,
               backgroundColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
               valueColor: AlwaysStoppedAnimation<Color>(
-                momentumPercent >= 80 ? AppColors.success : AppColors.primary,
+                momentumPercent >= 80 ? AppColors.success : primary,
               ),
             ),
           ),
@@ -132,7 +133,7 @@ class DailyProgressSummary extends StatelessWidget {
                   label: '$tasksCompleted/$tasksTotal Tasks',
                   color: tasksTotal > 0 && tasksCompleted == tasksTotal
                       ? AppColors.success
-                      : AppColors.primaryLight,
+                      : primary,
                   onTap: onTasksTap,
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -155,7 +156,7 @@ class DailyProgressSummary extends StatelessWidget {
                 _SummaryPill(
                   icon: Icons.school_outlined,
                   label: '${(roadmapProgress * 100).round()}% Learn',
-                  color: AppColors.primaryLight,
+                  color: primary,
                   onTap: onRoadmapTap,
                 ),
               ],

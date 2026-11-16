@@ -197,7 +197,7 @@ class _CalendarDayView extends ConsumerWidget {
                   onPressed: () => ref.read(selectedTaskDateProvider.notifier).jumpToToday(),
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
-                    foregroundColor: AppColors.primaryLight,
+                    foregroundColor: Theme.of(context).colorScheme.primary,
                   ),
                   child: const Text('Today', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
                 ),
@@ -247,9 +247,9 @@ class _CalendarDayView extends ConsumerWidget {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.2),
+                                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.4)),
+                                  border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4)),
                                 ),
                                 child: Text(
                                   task.title,
@@ -312,8 +312,8 @@ class _CalendarDayView extends ConsumerWidget {
                                       timeLabel,
                                       style: TextStyle(
                                         fontSize: 11,
-                                        fontWeight: FontWeight.w500,
-                                        color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                                       ),
                                     ),
                                   ),
@@ -342,7 +342,7 @@ class _CalendarDayView extends ConsumerWidget {
                         final minutesFromStart = (hour - startHour) * 60 + minute;
                         final topOffset = (minutesFromStart / 60.0) * hourHeight;
                         final durationMinutes = task.estimateMinutes.clamp(20, 180);
-                        final cardHeight = ((durationMinutes / 60.0) * hourHeight).clamp(46.0, 180.0);
+                        final cardHeight = ((durationMinutes / 60.0) * hourHeight).clamp(52.0, 180.0);
 
                         Color cardAccent;
                         switch (task.priority) {
@@ -353,7 +353,7 @@ class _CalendarDayView extends ConsumerWidget {
                             cardAccent = AppColors.high;
                             break;
                           case TaskPriority.medium:
-                            cardAccent = AppColors.primary;
+                            cardAccent = Theme.of(context).colorScheme.primary;
                             break;
                           case TaskPriority.low:
                             cardAccent = AppColors.low;
@@ -368,42 +368,50 @@ class _CalendarDayView extends ConsumerWidget {
                           child: GestureDetector(
                             onTap: () => TaskViewSheet.show(context, task),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: cardAccent.withValues(alpha: isDark ? 0.25 : 0.15),
+                                color: cardAccent.withValues(alpha: isDark ? 0.30 : 0.18),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border(
                                   left: BorderSide(color: cardAccent, width: 3.5),
-                                  top: BorderSide(color: cardAccent.withValues(alpha: 0.35)),
-                                  right: BorderSide(color: cardAccent.withValues(alpha: 0.35)),
-                                  bottom: BorderSide(color: cardAccent.withValues(alpha: 0.35)),
+                                  top: BorderSide(color: cardAccent.withValues(alpha: 0.4)),
+                                  right: BorderSide(color: cardAccent.withValues(alpha: 0.4)),
+                                  bottom: BorderSide(color: cardAccent.withValues(alpha: 0.4)),
                                 ),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    task.title,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.w700,
-                                      decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                                      color: isDark ? Colors.white : Colors.black87,
+                              alignment: Alignment.centerLeft,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      task.title,
+                                      maxLines: cardHeight < 62 ? 1 : 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                                        color: isDark ? Colors.white : Colors.black87,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${task.scheduledTime ?? "Anytime"} · ${task.estimateMinutes}m',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                                    ),
-                                  ),
-                                ],
+                                    if (cardHeight >= 54) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${task.scheduledTime ?? "Anytime"} · ${task.estimateMinutes}m',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -522,7 +530,7 @@ class _CalendarWeekView extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: isToday ? AppColors.primaryLight : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
+                            color: isToday ? Theme.of(context).colorScheme.primary : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -530,8 +538,8 @@ class _CalendarWeekView extends ConsumerWidget {
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             color: isToday
-                                ? AppColors.primary
-                                : (isSelected ? AppColors.primary.withValues(alpha: 0.25) : Colors.transparent),
+                                ? Theme.of(context).colorScheme.primary
+                                : (isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.25) : Colors.transparent),
                             shape: BoxShape.circle,
                           ),
                           child: Text(
@@ -568,7 +576,7 @@ class _CalendarWeekView extends ConsumerWidget {
                   width: 46,
                   padding: const EdgeInsets.only(right: 6),
                   alignment: Alignment.centerRight,
-                  child: const Text('ALL DAY', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w700, color: AppColors.primaryLight)),
+                  child: Text('ALL DAY', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.primary)),
                 ),
                 ...weekDays.map((day) {
                   final dayStr = DateFormat('yyyy-MM-dd').format(day);
@@ -589,7 +597,7 @@ class _CalendarWeekView extends ConsumerWidget {
                               margin: const EdgeInsets.only(bottom: 2),
                               padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.2),
+                                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(3),
                               ),
                               child: Text(
@@ -652,8 +660,8 @@ class _CalendarWeekView extends ConsumerWidget {
                                 timeLabel,
                                 style: TextStyle(
                                   fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                  color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                                 ),
                               ),
                             ),
@@ -714,7 +722,7 @@ class _CalendarWeekView extends ConsumerWidget {
                                   final minutesFromStart = (hour - startHour) * 60 + minute;
                                   final topOffset = (minutesFromStart / 60.0) * hourHeight;
                                   final durationMinutes = task.estimateMinutes.clamp(15, 120);
-                                  final cardHeight = ((durationMinutes / 60.0) * hourHeight).clamp(34.0, 120.0);
+                                  final cardHeight = ((durationMinutes / 60.0) * hourHeight).clamp(38.0, 120.0);
 
                                   Color cardAccent;
                                   switch (task.priority) {
@@ -725,7 +733,7 @@ class _CalendarWeekView extends ConsumerWidget {
                                       cardAccent = AppColors.high;
                                       break;
                                     case TaskPriority.medium:
-                                      cardAccent = AppColors.primary;
+                                      cardAccent = Theme.of(context).colorScheme.primary;
                                       break;
                                     case TaskPriority.low:
                                       cardAccent = AppColors.low;
@@ -742,32 +750,31 @@ class _CalendarWeekView extends ConsumerWidget {
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: cardAccent.withValues(alpha: isDark ? 0.30 : 0.18),
+                                          color: cardAccent.withValues(alpha: isDark ? 0.35 : 0.22),
                                           borderRadius: BorderRadius.circular(4),
                                           border: Border(
-                                            left: BorderSide(color: cardAccent, width: 3),
-                                            top: BorderSide(color: cardAccent.withValues(alpha: 0.35)),
-                                            right: BorderSide(color: cardAccent.withValues(alpha: 0.35)),
-                                            bottom: BorderSide(color: cardAccent.withValues(alpha: 0.35)),
+                                            left: BorderSide(color: cardAccent, width: 2.5),
+                                            top: BorderSide(color: cardAccent.withValues(alpha: 0.4)),
+                                            right: BorderSide(color: cardAccent.withValues(alpha: 0.4)),
+                                            bottom: BorderSide(color: cardAccent.withValues(alpha: 0.4)),
                                           ),
                                         ),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              task.title,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                height: 1.15,
-                                                fontWeight: FontWeight.w700,
-                                                decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                                                color: isDark ? Colors.white : Colors.black87,
-                                              ),
+                                        alignment: Alignment.topLeft,
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(3),
+                                          child: Text(
+                                            task.title,
+                                            maxLines: cardHeight < 48 ? 1 : 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            softWrap: true,
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              height: 1.15,
+                                              fontWeight: FontWeight.w700,
+                                              decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                                              color: isDark ? Colors.white : Colors.black87,
                                             ),
-                                          ],
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -868,13 +875,13 @@ class _CalendarMonthView extends ConsumerWidget {
           color: isDark ? const Color(0xFF161618) : Colors.white,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((w) {
+            children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((w) {
               return Text(
                 w,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primaryLight,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               );
             }).toList(),
@@ -933,12 +940,12 @@ class _CalendarMonthView extends ConsumerWidget {
                       padding: const EdgeInsets.all(2.5),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.primary.withValues(alpha: 0.15)
+                            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
                             : (isDark ? const Color(0xFF161618) : const Color(0xFFF2F2F7)),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(
                           color: isToday
-                              ? AppColors.primaryLight
+                              ? Theme.of(context).colorScheme.primary
                               : (isDark ? const Color(0xFF26262B) : const Color(0xFFE5E5EA)),
                           width: isToday ? 1.4 : 0.6,
                         ),
@@ -954,7 +961,7 @@ class _CalendarMonthView extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: isToday || isSelected ? FontWeight.w800 : FontWeight.w600,
-                                color: isToday ? AppColors.primaryLight : null,
+                                color: isToday ? Theme.of(context).colorScheme.primary : null,
                               ),
                             ),
                           ),
@@ -966,7 +973,7 @@ class _CalendarMonthView extends ConsumerWidget {
                                   margin: const EdgeInsets.only(bottom: 1.5),
                                   padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(alpha: 0.25),
+                                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                   child: Text(
@@ -982,7 +989,7 @@ class _CalendarMonthView extends ConsumerWidget {
                           if (dayTasks.length > 3)
                             Text(
                               '+${dayTasks.length - 3}',
-                              style: const TextStyle(fontSize: 8, color: AppColors.primaryLight, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 8, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
                             ),
                         ],
                       ),
@@ -1075,10 +1082,10 @@ class _CalendarScheduleView extends StatelessWidget {
                 children: [
                   Text(
                     isToday ? 'TODAY · ' : '',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.primaryLight,
+                      color: Theme.of(context).colorScheme.primary,
                       letterSpacing: 0.6,
                     ),
                   ),
@@ -1130,7 +1137,7 @@ class _CalendarScheduleView extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: task.isAllDay ? AppColors.primaryLight : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                              color: task.isAllDay ? Theme.of(context).colorScheme.primary : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
                             ),
                           ),
                         ),
@@ -1150,7 +1157,7 @@ class _CalendarScheduleView extends StatelessWidget {
                         ),
                         if (task.recurrence != 'none' && task.recurrence.isNotEmpty) ...[
                           const SizedBox(width: 6),
-                          const Icon(CupertinoIcons.repeat, size: 12, color: AppColors.primaryLight),
+                          Icon(CupertinoIcons.repeat, size: 12, color: Theme.of(context).colorScheme.primary),
                         ],
                       ],
                     ),

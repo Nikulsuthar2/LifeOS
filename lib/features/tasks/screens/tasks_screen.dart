@@ -56,6 +56,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
     final selectedDate = ref.watch(selectedTaskDateProvider);
     final currentFilter = ref.watch(taskFilterProvider);
     final viewMode = ref.watch(taskViewModeProvider);
@@ -96,14 +97,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                         _searchController.clear();
                       });
                     },
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                       child: Text(
                         'Cancel',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primaryLight,
+                          color: primary,
                         ),
                       ),
                     ),
@@ -131,7 +132,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                     ? CupertinoIcons.calendar
                     : CupertinoIcons.list_bullet,
                 size: 20,
-                color: viewMode == TaskViewMode.calendar ? AppColors.primaryLight : null,
+                color: viewMode == TaskViewMode.calendar ? primary : null,
               ),
               tooltip: viewMode == TaskViewMode.list ? 'Switch to Calendar View' : 'Switch to List View',
               onPressed: () => ref.read(taskViewModeProvider.notifier).toggle(),
@@ -140,7 +141,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               icon: Icon(
                 isInboxMode ? CupertinoIcons.calendar_today : CupertinoIcons.tray,
                 size: 20,
-                color: isInboxMode ? AppColors.primaryLight : null,
+                color: isInboxMode ? primary : null,
               ),
               tooltip: isInboxMode ? 'View Calendar Days' : 'View Inbox',
               onPressed: () {

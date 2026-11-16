@@ -5,7 +5,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/quick_capture_sheet.dart';
 import '../../features/tasks/screens/create_task_screen.dart';
-import '../../features/track/focus/providers/focus_provider.dart';
+import '../../features/track/focus/screens/focus_screen.dart';
+import '../../features/track/habits/screens/habit_detail_screen.dart';
 
 /// Modern grid-based action sheet opened from the center Add button in bottom navigation.
 /// Allows fast creation of tasks, habits, focus sessions, and roadmap items without
@@ -25,6 +26,7 @@ class QuickActionGridSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Container(
       decoration: BoxDecoration(
@@ -87,7 +89,7 @@ class QuickActionGridSheet extends ConsumerWidget {
                   context: context,
                   isDark: isDark,
                   icon: CupertinoIcons.checkmark_alt_circle_fill,
-                  iconColor: AppColors.primaryLight,
+                  iconColor: primary,
                   title: 'New Task',
                   subtitle: 'To-do, schedule, deadline',
                   onTap: () {
@@ -106,7 +108,7 @@ class QuickActionGridSheet extends ConsumerWidget {
                   subtitle: 'Daily streak & routine',
                   onTap: () {
                     Navigator.pop(context);
-                    QuickCaptureSheet.show(context);
+                    HabitDetailScreen.open(context, isNew: true);
                   },
                 ),
 
@@ -120,13 +122,7 @@ class QuickActionGridSheet extends ConsumerWidget {
                   subtitle: 'Pomodoro deep work',
                   onTap: () {
                     Navigator.pop(context);
-                    ref.read(focusTimerProvider.notifier).startTimer();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Focus session started!'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
+                    FocusScreen.open(context);
                   },
                 ),
 

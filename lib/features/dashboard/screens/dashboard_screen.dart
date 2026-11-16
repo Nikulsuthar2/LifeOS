@@ -114,6 +114,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
     final now = DateTime.now();
     final dayDateStr = DateFormat('EEEE · MMM d').format(now).toUpperCase();
 
@@ -129,7 +130,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Scaffold(
       body: SafeArea(
         child: RefreshIndicator(
-          color: AppColors.primary,
+          color: primary,
           onRefresh: () async {
             ref.invalidate(todayTaskMetricsProvider);
             ref.invalidate(todayFocusMinutesProvider);
@@ -187,7 +188,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       onPressed: () => QuickCaptureSheet.show(context),
                       style: IconButton.styleFrom(
                         backgroundColor: isDark ? AppColors.darkCardElevated : AppColors.lightCardElevated,
-                        foregroundColor: AppColors.primaryLight,
+                        foregroundColor: primary,
                       ),
                     ),
                   ],
@@ -246,7 +247,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             icon: const Icon(Icons.timer_outlined, size: 18),
                             tooltip: 'Focus on this task',
                             visualDensity: VisualDensity.compact,
-                            color: AppColors.primaryLight,
+                            color: primary,
                             onPressed: () {
                               ref.read(focusTimerProvider.notifier).linkTask(task.id, task.title);
                               ref.read(focusTimerProvider.notifier).setPreset(task.estimateMinutes, 'focus');
@@ -408,7 +409,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.school_outlined, size: 16, color: AppColors.primaryLight),
+                                  Icon(Icons.school_outlined, size: 16, color: primary),
                                   const SizedBox(width: AppSpacing.xs),
                                   Text(
                                     roadmap.title,
@@ -422,10 +423,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               ),
                               Text(
                                 '${(roadmap.progressPercentage * 100).round()}%',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.primaryLight,
+                                  color: primary,
                                 ),
                               ),
                             ],
@@ -437,7 +438,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               value: roadmap.progressPercentage,
                               minHeight: 4,
                               backgroundColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                              valueColor: AlwaysStoppedAnimation<Color>(primary),
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
@@ -466,15 +467,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: AppColors.primary.withValues(alpha: 0.15),
+                                          color: primary.withValues(alpha: 0.15),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
                                           topic.status.displayName,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.w700,
-                                            color: AppColors.primaryLight,
+                                            color: primary,
                                           ),
                                         ),
                                       ),

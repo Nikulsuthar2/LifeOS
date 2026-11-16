@@ -109,6 +109,7 @@ class _RecurrenceSelectorSheetState extends State<RecurrenceSelectorSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return Container(
       decoration: BoxDecoration(
@@ -154,7 +155,7 @@ class _RecurrenceSelectorSheetState extends State<RecurrenceSelectorSheet> {
                 ),
                 TextButton(
                   onPressed: _save,
-                  child: const Text('Done', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.primaryLight)),
+                  child: Text('Done', style: TextStyle(fontWeight: FontWeight.w700, color: primary)),
                 ),
               ],
             ),
@@ -261,7 +262,7 @@ class _RecurrenceSelectorSheetState extends State<RecurrenceSelectorSheet> {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     child: Row(
                       children: [
-                        const Icon(CupertinoIcons.calendar, size: 18, color: AppColors.primaryLight),
+                        Icon(CupertinoIcons.calendar, size: 18, color: primary),
                         const SizedBox(width: 12),
                         const Text('Repeat Until', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                         const Spacer(),
@@ -297,6 +298,7 @@ class _RecurrenceSelectorSheetState extends State<RecurrenceSelectorSheet> {
 
   Widget _buildOptionRow(String title, RecurrenceType type, bool isDark) {
     final isSelected = _selectedType == type;
+    final primary = Theme.of(context).colorScheme.primary;
 
     return InkWell(
       onTap: () {
@@ -314,12 +316,12 @@ class _RecurrenceSelectorSheetState extends State<RecurrenceSelectorSheet> {
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 color: isSelected
-                    ? AppColors.primaryLight
+                    ? primary
                     : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
               ),
             ),
             const Spacer(),
-            if (isSelected) const Icon(CupertinoIcons.checkmark, size: 16, color: AppColors.primaryLight),
+            if (isSelected) Icon(CupertinoIcons.checkmark, size: 16, color: primary),
           ],
         ),
       ),
@@ -328,6 +330,7 @@ class _RecurrenceSelectorSheetState extends State<RecurrenceSelectorSheet> {
 
   Widget _buildDayPill(int dayNum, String label, bool isDark) {
     final isSelected = _selectedDaysOfWeek.contains(dayNum);
+    final primary = Theme.of(context).colorScheme.primary;
 
     return GestureDetector(
       onTap: () {
@@ -347,11 +350,11 @@ class _RecurrenceSelectorSheetState extends State<RecurrenceSelectorSheet> {
         height: 42,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : (isDark ? const Color(0xFF1E1E22) : const Color(0xFFF2F2F7)),
+          color: isSelected ? primary : (isDark ? const Color(0xFF1E1E22) : const Color(0xFFF2F2F7)),
           shape: BoxShape.circle,
           border: Border.all(
             color: isSelected
-                ? AppColors.primary
+                ? primary
                 : (isDark ? const Color(0xFF2E2E34) : const Color(0xFFE5E5EA)),
             width: 1,
           ),

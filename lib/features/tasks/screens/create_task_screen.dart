@@ -137,6 +137,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final primary = Theme.of(ctx).colorScheme.primary;
         return Container(
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF161618) : Colors.white,
@@ -181,7 +182,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(CupertinoIcons.bookmark_fill, size: 16, color: AppColors.primaryLight),
+                            Icon(CupertinoIcons.bookmark_fill, size: 16, color: primary),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
@@ -312,6 +313,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
     final rule = RecurrenceRule.fromString(_recurrence, endDate: _recurrenceEndDate);
 
     return Scaffold(
@@ -339,7 +341,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
             icon: const Icon(CupertinoIcons.bookmark, size: 16),
             label: const Text('Templates', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
             onPressed: _showTemplatePicker,
-            style: TextButton.styleFrom(foregroundColor: AppColors.primaryLight),
+            style: TextButton.styleFrom(foregroundColor: primary),
           ),
           const SizedBox(width: 4),
         ],
@@ -480,7 +482,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(CupertinoIcons.plus_circle_fill, color: AppColors.primaryLight, size: 28),
+                      icon: Icon(CupertinoIcons.plus_circle_fill, color: primary, size: 28),
                       onPressed: _addSubtask,
                     ),
                   ],
@@ -559,7 +561,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           child: Row(
                             children: [
-                              const Icon(CupertinoIcons.calendar, size: 18, color: AppColors.primaryLight),
+                              Icon(CupertinoIcons.calendar, size: 18, color: primary),
                               const SizedBox(width: 12),
                               const Text('Date', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                               const Spacer(),
@@ -590,7 +592,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                             const Spacer(),
                             CupertinoSwitch(
                               value: _isAllDay,
-                              activeTrackColor: AppColors.primary,
+                              activeTrackColor: primary,
                               onChanged: (val) => setState(() => _isAllDay = val),
                             ),
                           ],
@@ -614,7 +616,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                             child: Row(
                               children: [
-                                const Icon(CupertinoIcons.clock, size: 18, color: AppColors.primaryLight),
+                                Icon(CupertinoIcons.clock, size: 18, color: primary),
                                 const SizedBox(width: 12),
                                 const Text('Time', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                 const Spacer(),
@@ -642,7 +644,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(CupertinoIcons.timer, size: 18, color: AppColors.primaryLight),
+                                  Icon(CupertinoIcons.timer, size: 18, color: primary),
                                   const SizedBox(width: 12),
                                   const Text('Duration', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                   const Spacer(),
@@ -698,7 +700,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                                           duration: const Duration(milliseconds: 150),
                                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                           decoration: BoxDecoration(
-                                            color: isSelected ? AppColors.primary : (isDark ? const Color(0xFF222227) : const Color(0xFFE5E5EA)),
+                                            color: isSelected ? primary : (isDark ? const Color(0xFF222227) : const Color(0xFFE5E5EA)),
                                             borderRadius: BorderRadius.circular(12),
                                           ),
                                           child: Text(
@@ -742,7 +744,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           child: Row(
                             children: [
-                              const Icon(CupertinoIcons.repeat, size: 18, color: AppColors.primaryLight),
+                              Icon(CupertinoIcons.repeat, size: 18, color: primary),
                               const SizedBox(width: 12),
                               const Text('Repeat', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                               const Spacer(),
@@ -756,7 +758,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     color: _recurrence != 'none'
-                                        ? AppColors.primaryLight
+                                        ? primary
                                         : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
                                   ),
                                 ),
@@ -774,7 +776,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           child: Row(
                             children: [
-                              const Icon(CupertinoIcons.calendar_badge_plus, size: 18, color: AppColors.primaryLight),
+                              Icon(CupertinoIcons.calendar_badge_plus, size: 18, color: primary),
                               const SizedBox(width: 12),
                               const Text('Until', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                               const Spacer(),
@@ -850,7 +852,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                       child: ElevatedButton(
                         onPressed: _isSaving ? null : _submitTask,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
                           elevation: 0,
@@ -867,12 +869,12 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
                     const SizedBox(height: 8),
                     Center(
                       child: TextButton.icon(
-                        icon: const Icon(CupertinoIcons.bookmark, size: 16, color: AppColors.primaryLight),
-                        label: const Text(
-                          'Save as Template',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primaryLight),
-                        ),
                         onPressed: _saveAsTemplate,
+                        icon: Icon(CupertinoIcons.bookmark, size: 16, color: primary),
+                        label: Text(
+                          'Save as Template',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: primary),
+                        ),
                       ),
                     ),
                   ],

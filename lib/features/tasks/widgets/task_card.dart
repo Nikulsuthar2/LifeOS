@@ -26,6 +26,7 @@ class TaskCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
     final isDone = task.isCompleted;
 
     // Priority color mapping
@@ -130,15 +131,15 @@ class TaskCard extends ConsumerWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.12),
+                                color: primary.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'All Day',
                                 style: TextStyle(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.primaryLight,
+                                  color: primary,
                                 ),
                               ),
                             ),
@@ -210,7 +211,7 @@ class TaskCard extends ConsumerWidget {
                             Icon(
                               CupertinoIcons.repeat,
                               size: 12,
-                              color: AppColors.primaryLight,
+                              color: primary,
                             ),
                           ],
                         ],

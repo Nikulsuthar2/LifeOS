@@ -219,6 +219,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
     final rule = RecurrenceRule.fromString(_recurrence, endDate: _recurrenceEndDate);
 
     return Scaffold(
@@ -410,7 +411,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(CupertinoIcons.plus_circle_fill, color: AppColors.primaryLight, size: 28),
+                    icon: Icon(CupertinoIcons.plus_circle_fill, color: primary, size: 28),
                     onPressed: _addSubtask,
                   ),
                 ],
@@ -489,7 +490,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
-                            const Icon(CupertinoIcons.calendar, size: 18, color: AppColors.primaryLight),
+                            Icon(CupertinoIcons.calendar, size: 18, color: primary),
                             const SizedBox(width: 12),
                             const Text('Date', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                             const Spacer(),
@@ -520,7 +521,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           const Spacer(),
                           CupertinoSwitch(
                             value: _isAllDay,
-                            activeTrackColor: AppColors.primary,
+                            activeTrackColor: primary,
                             onChanged: (val) => setState(() => _isAllDay = val),
                           ),
                         ],
@@ -544,7 +545,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           child: Row(
                             children: [
-                              const Icon(CupertinoIcons.clock, size: 18, color: AppColors.primaryLight),
+                              Icon(CupertinoIcons.clock, size: 18, color: primary),
                               const SizedBox(width: 12),
                               const Text('Time', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                               const Spacer(),
@@ -572,7 +573,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           children: [
                             Row(
                               children: [
-                                const Icon(CupertinoIcons.timer, size: 18, color: AppColors.primaryLight),
+                                Icon(CupertinoIcons.timer, size: 18, color: primary),
                                 const SizedBox(width: 12),
                                 const Text('Duration', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                                 const Spacer(),
@@ -626,7 +627,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                                         duration: const Duration(milliseconds: 150),
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: isSelected ? AppColors.primary : (isDark ? const Color(0xFF222227) : const Color(0xFFE5E5EA)),
+                                          color: isSelected ? primary : (isDark ? const Color(0xFF222227) : const Color(0xFFE5E5EA)),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Text(
@@ -670,7 +671,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
-                            const Icon(CupertinoIcons.repeat, size: 18, color: AppColors.primaryLight),
+                            Icon(CupertinoIcons.repeat, size: 18, color: primary),
                             const SizedBox(width: 12),
                             const Text('Repeat', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                             const Spacer(),
@@ -684,7 +685,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                   color: _recurrence != 'none'
-                                      ? AppColors.primaryLight
+                                      ? primary
                                       : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
                                 ),
                               ),
@@ -702,7 +703,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         child: Row(
                           children: [
-                            const Icon(CupertinoIcons.calendar_badge_plus, size: 18, color: AppColors.primaryLight),
+                            Icon(CupertinoIcons.calendar_badge_plus, size: 18, color: primary),
                             const SizedBox(width: 12),
                             const Text('Until', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                             const Spacer(),
@@ -776,7 +777,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           const Spacer(),
                           CupertinoSwitch(
                             value: _isTopPriority,
-                            activeTrackColor: AppColors.primary,
+                            activeTrackColor: primary,
                             onChanged: (val) => setState(() => _isTopPriority = val),
                           ),
                         ],
@@ -806,8 +807,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 icon: const Icon(CupertinoIcons.timer, size: 16),
                 label: const Text('Focus on this Task with Pomodoro', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primaryLight,
-                  side: const BorderSide(color: AppColors.primary, width: 1),
+                  foregroundColor: primary,
+                  side: BorderSide(color: primary, width: 1),
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -824,7 +825,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                     child: ElevatedButton(
                       onPressed: _isSaving ? null : _saveChanges,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
                         elevation: 0,
@@ -841,10 +842,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   const SizedBox(height: 8),
                   Center(
                     child: TextButton.icon(
-                      icon: const Icon(CupertinoIcons.bookmark, size: 16, color: AppColors.primaryLight),
-                      label: const Text(
+                      icon: Icon(CupertinoIcons.bookmark, size: 16, color: primary),
+                      label: Text(
                         'Save as Template',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primaryLight),
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: primary),
                       ),
                       onPressed: _saveAsTemplate,
                     ),

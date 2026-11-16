@@ -86,6 +86,7 @@ class _QuickCaptureSheetState extends ConsumerState<QuickCaptureSheet> with Sing
     final title = _habitTitleController.text.trim();
     if (title.isEmpty) return;
 
+    final now = DateTime.now();
     final habit = Habit(
       id: const Uuid().v4(),
       title: title,
@@ -93,6 +94,7 @@ class _QuickCaptureSheetState extends ConsumerState<QuickCaptureSheet> with Sing
       trackingType: 'boolean',
       targetValue: 1.0,
       frequency: 'daily',
+      startDate: DateTime(now.year, now.month, now.day),
       icon: _getIconForCategory(_selectedHabitCategory),
       color: _getColorForCategory(_selectedHabitCategory),
     );
@@ -139,6 +141,7 @@ class _QuickCaptureSheetState extends ConsumerState<QuickCaptureSheet> with Sing
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Material(
@@ -198,7 +201,7 @@ class _QuickCaptureSheetState extends ConsumerState<QuickCaptureSheet> with Sing
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               indicator: BoxDecoration(
-                color: AppColors.primary,
+                color: primary,
                 borderRadius: BorderRadius.circular(8),
               ),
               labelColor: Colors.white,
@@ -302,7 +305,7 @@ class _QuickCaptureSheetState extends ConsumerState<QuickCaptureSheet> with Sing
                       FilledButton(
                         onPressed: _saveTask,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: primary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
@@ -349,7 +352,7 @@ class _QuickCaptureSheetState extends ConsumerState<QuickCaptureSheet> with Sing
                       FilledButton(
                         onPressed: _saveHabit,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: primary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),

@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:life_os/core/database/app_database.dart';
 import 'package:life_os/core/models/focus_session.dart';
+import 'package:life_os/core/models/habit.dart';
 import 'package:life_os/core/models/roadmap.dart';
 import 'package:life_os/core/models/task.dart';
 import 'package:life_os/features/learning/repositories/roadmap_repository.dart';
@@ -141,6 +143,96 @@ void main() {
       // Check Feb 6 (past recurrenceEndDate of Jan 31)
       final febTasks = await taskRepo.getTasksForDate(DateTime(2027, 2, 6));
       expect(febTasks.any((t) => t.title == 'Monthly Financial Audit'), isFalse);
+    });
+
+    test('Habit 3-State Cycle & Restart: pending -> done -> fail -> pending and restart resets logs', () async {
+      final habitRepo = HabitRepository();
+      final habitsWithStatus = await habitRepo.getHabitsWithStatus();
+      final habit = habitsWithStatus.first.habit;
+
+      const testDateStr = '2026-11-20';
+
+      // 1. Initial state without log is pending
+      // Cycle: pending -> done
+      final s1 = await habitRepo.cycleHabitDayStatus(habit.id, testDateStr);
+      expect(s1, HabitDayStatus.done);
+
+      // Cycle: done -> fail
+      final s2 = await habitRepo.cycleHabitDayStatus(habit.id, testDateStr);
+      expect(s2, HabitDayStatus.fail);
+
+      // Cycle: fail -> pending
+      final s3 = await habitRepo.cycleHabitDayStatus(habit.id, testDateStr);
+      expect(s3, HabitDayStatus.pending);
+
+      // 2. Set to done, verify month logs
+      await habitRepo.setHabitDayStatus(habit.id, testDateStr, HabitDayStatus.done);
+      final monthResult = await habitRepo.getMonthLogs(habit.id, 2026, 11);
+      expect(monthResult.dayStatuses[testDateStr], HabitDayStatus.done);
+
+      // 3. Restart habit progress
+      await habitRepo.restartHabitProgress(habit.id);
+      final restartedHabit = await habitRepo.getHabitById(habit.id);
+      expect(restartedHabit, isNotNull);
+      final monthResultAfterRestart = await habitRepo.getMonthLogs(habit.id, 2026, 11);
+      expect(monthResultAfterRestart.dayStatuses[testDateStr], isNull);
+    });
+
+    test('Habit Progress up to Current Date: week tracking considers only days up to today', () async {
+      final habitRepo = HabitRepository();
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final monday = today.subtract(Duration(days: today.weekday - 1));
+
+      // Query habits with weekDate = today
+      final habitsWithStatus = await habitRepo.getHabitsWithStatus(weekDate: today);
+      final firstHabit = habitsWithStatus.first;
+
+      // Eligible days in current week should equal elapsed days up to today
+      final expectedEligible = today.weekday;
+      expect(firstHabit.weekEnabledCount, equals(expectedEligible));
+
+      // Future days in current week should NOT be unlocked
+      for (int i = 0; i < 7; i++) {
+        final d = monday.add(Duration(days: i));
+        if (d.isAfter(today)) {
+          expect(firstHabit.weekDayEnabled[i], isFalse);
+        } else {
+          expect(firstHabit.weekDayEnabled[i], isTrue);
+        }
+      }
+    });
+
+    test('Habit Statistics: starting a habit today and completing today yields 100% score', () async {
+      final habitRepo = HabitRepository();
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final todayStr = DateFormat('yyyy-MM-dd').format(today);
+
+      final newHabit = Habit(
+        id: 'new-habit-started-today',
+        title: 'Drink 2L Water',
+        category: 'Health',
+        startDate: today,
+      );
+
+      await habitRepo.insertHabit(newHabit);
+
+      // Initially with no logs, overall score is 0%
+      final initialStats = await habitRepo.getHabitDetailedStats(newHabit.id);
+      expect(initialStats.totalDaysTracked, equals(1));
+      expect(initialStats.timesCompletedAllTime, equals(0));
+      expect(initialStats.overallScorePercentage, equals(0));
+
+      // Mark today as done
+      await habitRepo.setHabitDayStatus(newHabit.id, todayStr, HabitDayStatus.done);
+
+      // Detailed stats should now show 100% (1 completed out of 1 active day)
+      final statsAfterDone = await habitRepo.getHabitDetailedStats(newHabit.id);
+      expect(statsAfterDone.totalDaysTracked, equals(1));
+      expect(statsAfterDone.timesCompletedAllTime, equals(1));
+      expect(statsAfterDone.overallScorePercentage, equals(100));
+      expect(statsAfterDone.currentStreak, equals(1));
     });
   });
 }
