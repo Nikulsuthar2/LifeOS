@@ -164,6 +164,10 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     required BuildContext context,
     required Color primary,
   }) {
+    final onPrimary = ThemeData.estimateBrightnessForColor(primary) == Brightness.light
+        ? const Color(0xFF141416)
+        : Colors.white;
+
     return Tooltip(
       message: 'Create new',
       child: Material(
@@ -192,10 +196,10 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                 ),
               ],
             ),
-            child: const Center(
+            child: Center(
               child: Icon(
                 Icons.add_rounded,
-                color: Colors.white,
+                color: onPrimary,
                 size: 28,
               ),
             ),

@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
@@ -262,7 +261,7 @@ class _RecurrenceSelectorSheetState extends State<RecurrenceSelectorSheet> {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     child: Row(
                       children: [
-                        Icon(CupertinoIcons.calendar, size: 18, color: primary),
+                        Icon(Icons.calendar_today_rounded, size: 18, color: primary),
                         const SizedBox(width: 12),
                         const Text('Repeat Until', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                         const Spacer(),
@@ -278,11 +277,11 @@ class _RecurrenceSelectorSheetState extends State<RecurrenceSelectorSheet> {
                           const SizedBox(width: 6),
                           GestureDetector(
                             onTap: () => setState(() => _endDate = null),
-                            child: const Icon(CupertinoIcons.clear_circled_solid, size: 16),
+                            child: const Icon(Icons.cancel_rounded, size: 16),
                           ),
                         ] else ...[
                           const SizedBox(width: 4),
-                          const Icon(CupertinoIcons.chevron_forward, size: 14),
+                          const Icon(Icons.chevron_right_rounded, size: 16),
                         ],
                       ],
                     ),
@@ -321,7 +320,7 @@ class _RecurrenceSelectorSheetState extends State<RecurrenceSelectorSheet> {
               ),
             ),
             const Spacer(),
-            if (isSelected) Icon(CupertinoIcons.checkmark, size: 16, color: primary),
+            if (isSelected) Icon(Icons.check_rounded, size: 18, color: primary),
           ],
         ),
       ),

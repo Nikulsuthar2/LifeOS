@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -38,9 +37,9 @@ class HabitsScreen extends ConsumerWidget {
           IconButton(
             icon: Icon(
               viewMode == HabitViewMode.expanded
-                  ? CupertinoIcons.rectangle_grid_1x2
-                  : CupertinoIcons.list_bullet,
-              size: 20,
+                  ? Icons.view_agenda_rounded
+                  : Icons.format_list_bulleted_rounded,
+              size: 22,
               color: primary,
             ),
             tooltip: viewMode == HabitViewMode.expanded
@@ -51,7 +50,7 @@ class HabitsScreen extends ConsumerWidget {
             },
           ),
           IconButton(
-            icon: Icon(CupertinoIcons.add, size: 22, color: primary),
+            icon: Icon(Icons.add_rounded, size: 24, color: primary),
             tooltip: 'Create Habit',
             onPressed: () {
               HabitDetailScreen.open(context, isNew: true);
@@ -132,7 +131,7 @@ class HabitsScreen extends ConsumerWidget {
               data: (habits) {
                 if (habits.isEmpty) {
                   return EmptyState(
-                    icon: CupertinoIcons.flame,
+                    icon: Icons.local_fire_department_rounded,
                     title: selectedFilter == 'all'
                         ? 'No habits tracked yet'
                         : 'No $selectedFilter habits',

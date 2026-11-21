@@ -150,7 +150,7 @@ void main() {
       final habitsWithStatus = await habitRepo.getHabitsWithStatus();
       final habit = habitsWithStatus.first.habit;
 
-      const testDateStr = '2026-11-20';
+      const testDateStr = '2026-11-25';
 
       // 1. Initial state without log is pending
       // Cycle: pending -> done
@@ -184,21 +184,23 @@ void main() {
       final today = DateTime(now.year, now.month, now.day);
       final monday = today.subtract(Duration(days: today.weekday - 1));
 
-      // Query habits with weekDate = today
+      // Query habits with weekDate = today, using a daily habit to test 7-day tracking
       final habitsWithStatus = await habitRepo.getHabitsWithStatus(weekDate: today);
-      final firstHabit = habitsWithStatus.first;
+      final dailyHabit = habitsWithStatus.firstWhere((h) => h.habit.frequency == 'daily');
 
-      // Eligible days in current week should equal elapsed days up to today
-      final expectedEligible = today.weekday;
-      expect(firstHabit.weekEnabledCount, equals(expectedEligible));
+      // Eligible days in current week should equal scheduled days up to today
+      final expectedEligible = List.generate(7, (i) => monday.add(Duration(days: i)))
+          .where((d) => !d.isAfter(today) && habitRepo.isDayScheduled(dailyHabit.habit, d))
+          .length;
+      expect(dailyHabit.weekEnabledCount, equals(expectedEligible));
 
-      // Future days in current week should NOT be unlocked
+      // Future days or unscheduled days in current week should NOT be unlocked
       for (int i = 0; i < 7; i++) {
         final d = monday.add(Duration(days: i));
-        if (d.isAfter(today)) {
-          expect(firstHabit.weekDayEnabled[i], isFalse);
+        if (d.isAfter(today) || !habitRepo.isDayScheduled(dailyHabit.habit, d)) {
+          expect(dailyHabit.weekDayEnabled[i], isFalse);
         } else {
-          expect(firstHabit.weekDayEnabled[i], isTrue);
+          expect(dailyHabit.weekDayEnabled[i], isTrue);
         }
       }
     });

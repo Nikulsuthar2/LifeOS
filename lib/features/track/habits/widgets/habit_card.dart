@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -30,7 +29,7 @@ class HabitCard extends ConsumerWidget {
         return Container(
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF141416) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             border: Border(
               top: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
             ),
@@ -63,7 +62,7 @@ class HabitCard extends ConsumerWidget {
                 ),
                 const Divider(),
                 ListTile(
-                  leading: const Icon(CupertinoIcons.calendar, size: 20),
+                  leading: const Icon(Icons.calendar_month_rounded, size: 20),
                   title: const Text('Calendar View', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -71,7 +70,7 @@ class HabitCard extends ConsumerWidget {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(CupertinoIcons.chart_bar, size: 20),
+                  leading: const Icon(Icons.bar_chart_rounded, size: 20),
                   title: const Text('Statistics & Charts', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -79,7 +78,7 @@ class HabitCard extends ConsumerWidget {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(CupertinoIcons.pencil, size: 20),
+                  leading: const Icon(Icons.edit_rounded, size: 20),
                   title: const Text('Edit Habit Settings', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -87,7 +86,7 @@ class HabitCard extends ConsumerWidget {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(CupertinoIcons.trash, color: AppColors.error, size: 20),
+                  leading: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
                   title: const Text('Delete Habit', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600, fontSize: 14)),
                   onTap: () async {
                     Navigator.pop(ctx);
@@ -277,9 +276,9 @@ class HabitCard extends ConsumerWidget {
                   ),
                   alignment: Alignment.center,
                   child: todayStatus == HabitDayStatus.done
-                      ? const Icon(Icons.check, size: 18, color: Colors.white)
+                      ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
                       : todayStatus == HabitDayStatus.fail
-                          ? const Icon(Icons.close, size: 18, color: Colors.white)
+                          ? const Icon(Icons.close_rounded, size: 18, color: Colors.white)
                           : null,
                 ),
               ),
@@ -458,9 +457,9 @@ class HabitCard extends ConsumerWidget {
                                       ),
                                     )
                                   : status == HabitDayStatus.done
-                                      ? const Icon(Icons.check, size: 16, color: Colors.white)
+                                      ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
                                       : status == HabitDayStatus.fail
-                                          ? const Icon(Icons.close, size: 16, color: Colors.white)
+                                          ? const Icon(Icons.close_rounded, size: 16, color: Colors.white)
                                           : Text(
                                               '${day.day}',
                                               style: TextStyle(
@@ -516,7 +515,7 @@ class HabitCard extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(CupertinoIcons.calendar, size: 17),
+                        icon: const Icon(Icons.calendar_month_rounded, size: 18),
                         tooltip: 'Calendar View',
                         visualDensity: VisualDensity.compact,
                         padding: const EdgeInsets.all(6),
@@ -527,7 +526,7 @@ class HabitCard extends ConsumerWidget {
                       ),
                       const SizedBox(width: 8),
                       IconButton(
-                        icon: const Icon(CupertinoIcons.chart_bar, size: 17),
+                        icon: const Icon(Icons.bar_chart_rounded, size: 18),
                         tooltip: 'Statistics',
                         visualDensity: VisualDensity.compact,
                         padding: const EdgeInsets.all(6),
@@ -538,7 +537,7 @@ class HabitCard extends ConsumerWidget {
                       ),
                       const SizedBox(width: 8),
                       IconButton(
-                        icon: const Icon(Icons.more_vert, size: 18),
+                        icon: const Icon(Icons.more_horiz_rounded, size: 20),
                         tooltip: 'More Options',
                         visualDensity: VisualDensity.compact,
                         padding: const EdgeInsets.all(6),

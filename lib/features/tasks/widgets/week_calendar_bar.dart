@@ -5,7 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../providers/task_provider.dart';
 
-/// Minimal, Cupertino-inspired Expandable Calendar for Life OS Tasks.
+/// Minimal, Material 3 Expressive Expandable Calendar for Life OS Tasks.
 /// - Collapsed (normal): Shows the snappy 7-day week bar (Mon - Sun).
 /// - Expanded: Seamlessly expands in the exact same component into the full month calendar.
 /// - Mon - Sun columns stay pixel-aligned with smooth squircle day cells.
@@ -137,7 +137,7 @@ class _WeekCalendarBarState extends ConsumerState<WeekCalendarBar> {
         selectedDate.month == today.month &&
         selectedDate.day == today.day;
 
-    final titleDate = isExpanded ? _displayedMonth : selectedDate;
+    final titleDate = _displayedMonth;
     final monthYearTitle = DateFormat('MMMM yyyy').format(titleDate);
     final taskDates = weekTaskDatesAsync.value ?? <String>{};
 
@@ -283,6 +283,15 @@ class _WeekCalendarBarState extends ConsumerState<WeekCalendarBar> {
           // 4. Subtle Hairline Drag / Tap Handle
           GestureDetector(
             onTap: _toggleExpanded,
+            onVerticalDragUpdate: (details) {
+              if (details.primaryDelta != null) {
+                if (details.primaryDelta! < -4 && isExpanded) {
+                  ref.read(weekCalendarExpandedProvider.notifier).setExpanded(false);
+                } else if (details.primaryDelta! > 4 && !isExpanded) {
+                  ref.read(weekCalendarExpandedProvider.notifier).setExpanded(true);
+                }
+              }
+            },
             child: Container(
               color: Colors.transparent,
               padding: const EdgeInsets.only(top: 4, bottom: 2),
@@ -316,11 +325,9 @@ class _WeekCalendarBarState extends ConsumerState<WeekCalendarBar> {
         pageSnapping: true,
         onPageChanged: (pageIndex) {
           final pageMonday = _mondayForWeekPage(pageIndex);
-          final currentWeekday = selectedDate.weekday; // 1 = Mon ... 7 = Sun
-          final newSelectedDate = pageMonday.add(Duration(days: currentWeekday - 1));
-          dateNotifier.setDate(newSelectedDate);
+          final midWeek = pageMonday.add(const Duration(days: 3));
           setState(() {
-            _displayedMonth = DateTime(newSelectedDate.year, newSelectedDate.month, 1);
+            _displayedMonth = DateTime(midWeek.year, midWeek.month, 1);
           });
         },
         itemBuilder: (context, pageIndex) {
@@ -425,7 +432,7 @@ class _WeekCalendarBarState extends ConsumerState<WeekCalendarBar> {
   }
 }
 
-/// Unified, minimal Cupertino day cell for both Week Bar (collapsed) and Month Calendar (expanded).
+/// Unified, minimal Material 3 Expressive day cell for both Week Bar (collapsed) and Month Calendar (expanded).
 class _DayCell extends StatelessWidget {
   final DateTime day;
   final bool isSelected;
@@ -447,6 +454,9 @@ class _DayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = Theme.of(context).colorScheme.primary;
+    final onSelectedColor = ThemeData.estimateBrightnessForColor(primary) == Brightness.light
+        ? const Color(0xFF141416)
+        : Colors.white;
 
     return Expanded(
       child: Padding(
@@ -487,7 +497,7 @@ class _DayCell extends StatelessWidget {
                           ? FontWeight.w800
                           : (isCurrentMonth ? FontWeight.w600 : FontWeight.w400),
                       color: isSelected
-                          ? Colors.white
+                          ? onSelectedColor
                           : (isToday
                               ? primary
                               : (!isCurrentMonth
@@ -507,7 +517,7 @@ class _DayCell extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: hasTasks
-                          ? (isSelected ? Colors.white : primary)
+                          ? (isSelected ? onSelectedColor : primary)
                           : Colors.transparent,
                     ),
                   ),

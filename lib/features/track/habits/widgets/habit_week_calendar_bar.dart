@@ -1,11 +1,10 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/habit_provider.dart';
 
-/// Minimal, Cupertino-inspired Expandable Calendar for Life OS Habits.
+/// Minimal, Material 3 Expressive Expandable Calendar for Life OS Habits.
 /// - Collapsed: Shows the snappy 7-day week bar (Mon - Sun).
 /// - Expanded: Expands in-place into the full month calendar.
 /// - Inherits page background (pitch charcoal #09090B).
@@ -147,8 +146,8 @@ class _HabitWeekCalendarBarState extends ConsumerState<HabitWeekCalendarBar> {
                         curve: Curves.easeOutCubic,
                         turns: isExpanded ? 0.5 : 0.0,
                         child: Icon(
-                          CupertinoIcons.chevron_down,
-                          size: 13,
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 16,
                           color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                         ),
                       ),
@@ -174,8 +173,8 @@ class _HabitWeekCalendarBarState extends ConsumerState<HabitWeekCalendarBar> {
                     ),
                   IconButton(
                     icon: Icon(
-                      isExpanded ? CupertinoIcons.chevron_up : CupertinoIcons.calendar,
-                      size: 18,
+                      isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.calendar_month_rounded,
+                      size: 20,
                       color: isExpanded ? Theme.of(context).colorScheme.primary : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
                     ),
                     tooltip: isExpanded ? 'Collapse to week' : 'Expand to month',
@@ -344,10 +343,13 @@ class _HabitWeekCalendarBarState extends ConsumerState<HabitWeekCalendarBar> {
     Border? cellBorder;
 
     final primary = Theme.of(context).colorScheme.primary;
+    final onSelectedColor = ThemeData.estimateBrightnessForColor(primary) == Brightness.light
+        ? const Color(0xFF141416)
+        : Colors.white;
 
     if (isSelected) {
       cellBg = primary;
-      textColor = Colors.white;
+      textColor = onSelectedColor;
     } else if (isToday) {
       textColor = primary;
       cellBorder = Border.all(color: primary.withValues(alpha: 0.6), width: 1.2);

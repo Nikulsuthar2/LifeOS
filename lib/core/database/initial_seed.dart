@@ -597,7 +597,175 @@ class InitialDatabaseSeed {
       'could_improve': 'Need to step away from screens earlier before bedtime.',
       'lessons_learned': 'Consistent daily micro-sessions beat occasional weekend marathons.',
       'random_thoughts': 'Connecting learning roadmaps directly to daily tasks is a game changer.',
+      'tags': '["productivity","learning","algorithms"]',
       'created_at': now.subtract(const Duration(days: 1)).toIso8601String(),
+      'updated_at': now.subtract(const Duration(days: 1)).toIso8601String(),
+    });
+
+    // 8. Notes
+    await db.insert('notes', {
+      'id': uuid.v4(),
+      'title': 'Polymath Learning Philosophy',
+      'content': 'A polymath synthesizes ideas across disciplines—combining computer science, visual arts, and cognitive science to produce novel insights.\n\nKey Principles:\n- Build T-shaped depth\n- Practice spaced recall\n- Apply cross-domain mental models',
+      'folder': 'Philosophy',
+      'tags': '["polymath","learning","ideas"]',
+      'is_pinned': 1,
+      'color': 4284704497,
+      'created_at': now.subtract(const Duration(days: 2)).toIso8601String(),
+      'updated_at': now.subtract(const Duration(days: 1)).toIso8601String(),
+    });
+
+    await db.insert('notes', {
+      'id': uuid.v4(),
+      'title': 'Clean Architecture & Flutter Patterns',
+      'content': 'Separation of concerns:\n- Core: models, database, tokens\n- Features: domain providers, repositories, UI widgets\n- Offline-first SQLite local persistence with Riverpod state management',
+      'folder': 'Tech',
+      'tags': '["flutter","architecture"]',
+      'is_pinned': 0,
+      'color': 0,
+      'created_at': now.subtract(const Duration(days: 1)).toIso8601String(),
+      'updated_at': now.toIso8601String(),
+    });
+
+    // 9. Health Data
+    await db.insert('health_vitals', {
+      'id': uuid.v4(),
+      'date_str': todayStr,
+      'height_cm': 178.0,
+      'weight_kg': 72.5,
+      'bmi': 22.9,
+      'blood_type': 'O+',
+      'blood_sugar': 94.0,
+      'blood_pressure_systolic': 118,
+      'blood_pressure_diastolic': 78,
+      'notes': 'Normal morning reading, well-hydrated.',
+      'created_at': now.toIso8601String(),
+    });
+
+    await db.insert('health_water_logs', {
+      'id': uuid.v4(),
+      'date_str': todayStr,
+      'glasses_drank': 5,
+      'target_glasses': 8,
+      'updated_at': now.toIso8601String(),
+    });
+
+    await db.insert('health_sleep_logs', {
+      'id': uuid.v4(),
+      'date_str': todayStr,
+      'bed_time': '23:15',
+      'wake_time': '06:45',
+      'duration_minutes': 450,
+      'quality_rating': 4,
+      'notes': 'Deep restorative sleep, no awakenings.',
+      'created_at': now.toIso8601String(),
+    });
+
+    final p1 = uuid.v4();
+    final p2 = uuid.v4();
+    final p3 = uuid.v4();
+
+    await db.insert('health_products', {
+      'id': p1,
+      'name': 'SPF 50+ Sunscreen',
+      'category': 'skincare',
+      'dosage_or_routine': 'Apply morning after moisturizer',
+      'time_of_day': 'morning',
+      'is_active': 1,
+      'notes': 'Daily protection',
+      'created_at': now.toIso8601String(),
+    });
+    await db.insert('health_products', {
+      'id': p2,
+      'name': 'Rosemary Scalp Serum',
+      'category': 'haircare',
+      'dosage_or_routine': '5 drops before bedtime',
+      'time_of_day': 'evening',
+      'is_active': 1,
+      'notes': 'Hair density support',
+      'created_at': now.toIso8601String(),
+    });
+    await db.insert('health_products', {
+      'id': p3,
+      'name': 'Vitamin D3 & Omega-3',
+      'category': 'supplement',
+      'dosage_or_routine': '1 capsule with breakfast',
+      'time_of_day': 'morning',
+      'is_active': 1,
+      'notes': 'Immune and brain health',
+      'created_at': now.toIso8601String(),
+    });
+
+    // 10. 24-Hour Routine Schedule Blocks
+    final routineBlocks = [
+      {'id': uuid.v4(), 'title': 'Sleep & Recovery', 'start_time': '00:00', 'end_time': '06:30', 'category': 'Sleep', 'color': 4280953257},
+      {'id': uuid.v4(), 'title': 'Morning Hydration & Sunlight', 'start_time': '06:30', 'end_time': '07:15', 'category': 'Morning', 'color': 4294944800},
+      {'id': uuid.v4(), 'title': 'Exercise & Yoga / Movement', 'start_time': '07:15', 'end_time': '08:15', 'category': 'Workout', 'color': 4280786520},
+      {'id': uuid.v4(), 'title': 'Healthy Breakfast & Planning', 'start_time': '08:15', 'end_time': '09:00', 'category': 'Morning', 'color': 4294944800},
+      {'id': uuid.v4(), 'title': 'Deep Work Block 1', 'start_time': '09:00', 'end_time': '12:30', 'category': 'Focus', 'color': 4284704497},
+      {'id': uuid.v4(), 'title': 'Nutritious Lunch & Walk', 'start_time': '12:30', 'end_time': '13:30', 'category': 'Leisure', 'color': 4283802521},
+      {'id': uuid.v4(), 'title': 'Deep Work Block 2', 'start_time': '13:30', 'end_time': '17:00', 'category': 'Focus', 'color': 4284704497},
+      {'id': uuid.v4(), 'title': 'Skill Acquisition & Reading', 'start_time': '17:00', 'end_time': '18:30', 'category': 'Learning', 'color': 4288424447},
+      {'id': uuid.v4(), 'title': 'Dinner & Social Time', 'start_time': '18:30', 'end_time': '20:30', 'category': 'Leisure', 'color': 4283802521},
+      {'id': uuid.v4(), 'title': 'Evening Journal & Wind Down', 'start_time': '20:30', 'end_time': '22:30', 'category': 'Evening', 'color': 4285880796},
+      {'id': uuid.v4(), 'title': 'Sleep & Recovery', 'start_time': '22:30', 'end_time': '23:59', 'category': 'Sleep', 'color': 4280953257},
+    ];
+    for (final rb in routineBlocks) {
+      await db.insert('routines_24h', rb);
+    }
+
+    // 11. Polymath Skills
+    final initialSkills = [
+      {'id': uuid.v4(), 'title': 'Flutter Cross-Platform Architecture', 'domain': 'Tech & Engineering', 'level': 4, 'status': 'active', 'xp': 850, 'notes': 'Offline first, M3 expressive design, state management', 'created_at': now.toIso8601String()},
+      {'id': uuid.v4(), 'title': 'Algorithms & Data Structures', 'domain': 'Computer Science', 'level': 3, 'status': 'active', 'xp': 420, 'notes': 'Graph traversals, DP, Trees', 'created_at': now.toIso8601String()},
+      {'id': uuid.v4(), 'title': 'Music Theory & Piano', 'domain': 'Arts & Music', 'level': 2, 'status': 'active', 'xp': 180, 'notes': 'Circle of fifths, chord progressions', 'created_at': now.toIso8601String()},
+      {'id': uuid.v4(), 'title': 'Calisthenics & Handstands', 'domain': 'Physical Mastery', 'level': 3, 'status': 'active', 'xp': 390, 'notes': 'Clean form push/pull variations, core balance', 'created_at': now.toIso8601String()},
+      {'id': uuid.v4(), 'title': 'Stoic Philosophy & Mental Models', 'domain': 'Humanities', 'level': 3, 'status': 'active', 'xp': 350, 'notes': 'Dichotomy of control, amor fati', 'created_at': now.toIso8601String()},
+      {'id': uuid.v4(), 'title': 'Neuroscience & Cognitive Science', 'domain': 'Science', 'level': 1, 'status': 'queued', 'xp': 0, 'notes': 'Memory consolidation and neural plasticity', 'created_at': now.toIso8601String()},
+    ];
+    for (final sk in initialSkills) {
+      await db.insert('polymath_skills', sk);
+    }
+
+    // 12. Bucket List Items
+    final bucketItems = [
+      {'id': uuid.v4(), 'title': 'Interstellar (IMAX Re-release)', 'category': 'movie', 'status': 'completed', 'rating': 5.0, 'completed_at': '2026-10-15', 'notes': 'Masterpiece soundtrack and cinematic visuals.', 'created_at': now.toIso8601String()},
+      {'id': uuid.v4(), 'title': 'The Legend of Zelda: Tears of the Kingdom', 'category': 'game', 'status': 'in_progress', 'rating': 4.8, 'notes': 'Exploring depth mechanics and physics builds.', 'created_at': now.toIso8601String()},
+      {'id': uuid.v4(), 'title': 'Gödel, Escher, Bach: An Eternal Golden Braid', 'category': 'book', 'status': 'in_progress', 'rating': 4.9, 'notes': 'Exploration of cognition, logic, and art.', 'created_at': now.toIso8601String()},
+      {'id': uuid.v4(), 'title': 'Northern Lights in Tromsø, Norway', 'category': 'travel', 'status': 'wishlist', 'rating': 0.0, 'notes': 'Winter aurora borealis expedition.', 'created_at': now.toIso8601String()},
+      {'id': uuid.v4(), 'title': 'Run a Half-Marathon (21.1 km)', 'category': 'experience', 'status': 'wishlist', 'rating': 0.0, 'notes': 'Target sub-2 hour time.', 'created_at': now.toIso8601String()},
+    ];
+    for (final bi in bucketItems) {
+      await db.insert('bucket_list', bi);
+    }
+
+    // 13. Project Features for Seed Projects
+    await db.insert('project_features', {
+      'id': uuid.v4(),
+      'project_id': projectId,
+      'title': 'SQLite Offline Cache Layer',
+      'status': 'done',
+      'priority': 'high',
+      'position': 0,
+      'created_at': now.toIso8601String(),
+    });
+    await db.insert('project_features', {
+      'id': uuid.v4(),
+      'project_id': projectId,
+      'title': 'Material 3 Expressive UI Design',
+      'status': 'in_progress',
+      'priority': 'urgent',
+      'position': 1,
+      'created_at': now.toIso8601String(),
+    });
+    await db.insert('project_features', {
+      'id': uuid.v4(),
+      'project_id': projectId,
+      'title': 'Cross-Module Gamification Engine',
+      'status': 'upcoming',
+      'priority': 'high',
+      'position': 2,
+      'created_at': now.toIso8601String(),
     });
   }
 }

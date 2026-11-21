@@ -1,5 +1,4 @@
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -362,9 +361,9 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
                 unselectedLabelColor: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                 labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                 tabs: const [
-                  Tab(icon: Icon(CupertinoIcons.calendar, size: 18), text: 'Calendar'),
-                  Tab(icon: Icon(CupertinoIcons.chart_bar, size: 18), text: 'Statistics'),
-                  Tab(icon: Icon(CupertinoIcons.pencil, size: 18), text: 'Edit'),
+                  Tab(icon: Icon(Icons.calendar_month_rounded, size: 20), text: 'Calendar'),
+                  Tab(icon: Icon(Icons.bar_chart_rounded, size: 20), text: 'Statistics'),
+                  Tab(icon: Icon(Icons.edit_rounded, size: 20), text: 'Edit'),
                 ],
               ),
       ),
@@ -410,7 +409,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: const Icon(CupertinoIcons.chevron_left, size: 18),
+                  icon: const Icon(Icons.chevron_left_rounded, size: 22),
                   onPressed: () {
                     setState(() {
                       _calendarMonth = DateTime(_calendarMonth.year, _calendarMonth.month - 1, 1);
@@ -422,7 +421,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
                 IconButton(
-                  icon: const Icon(CupertinoIcons.chevron_right, size: 18),
+                  icon: const Icon(Icons.chevron_right_rounded, size: 22),
                   onPressed: () {
                     setState(() {
                       _calendarMonth = DateTime(_calendarMonth.year, _calendarMonth.month + 1, 1);
@@ -603,7 +602,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
                             color: AppColors.high.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(CupertinoIcons.flame_fill, color: AppColors.high, size: 22),
+                          child: const Icon(Icons.local_fire_department_rounded, color: AppColors.high, size: 24),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -777,7 +776,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
                         children: [
                           Row(
                             children: const [
-                              Icon(CupertinoIcons.flame_fill, size: 16, color: AppColors.high),
+                              Icon(Icons.local_fire_department_rounded, size: 18, color: AppColors.high),
                               SizedBox(width: 6),
                               Text('Current Streak', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                             ],
@@ -809,7 +808,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
                         children: [
                           Row(
                             children: [
-                              Icon(CupertinoIcons.rosette, size: 16, color: Theme.of(context).colorScheme.primary),
+                              Icon(Icons.emoji_events_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
                               const SizedBox(width: 6),
                               const Text('Best Streak', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                             ],
@@ -888,17 +887,23 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
                             color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                           ),
                         ),
-                        CupertinoSegmentedControl<String>(
-                          padding: EdgeInsets.zero,
-                          children: const {
-                            'week': Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3), child: Text('Week', style: TextStyle(fontSize: 11))),
-                            'month': Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3), child: Text('Month', style: TextStyle(fontSize: 11))),
-                            'year': Padding(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3), child: Text('Year', style: TextStyle(fontSize: 11))),
+                        SegmentedButton<String>(
+                          segments: const [
+                            ButtonSegment(value: 'week', label: Text('Week', style: TextStyle(fontSize: 11.5))),
+                            ButtonSegment(value: 'month', label: Text('Month', style: TextStyle(fontSize: 11.5))),
+                            ButtonSegment(value: 'year', label: Text('Year', style: TextStyle(fontSize: 11.5))),
+                          ],
+                          selected: {_statsPeriod},
+                          onSelectionChanged: (set) {
+                            setState(() => _statsPeriod = set.first);
                           },
-                          groupValue: _statsPeriod,
-                          onValueChanged: (v) {
-                            setState(() => _statsPeriod = v);
-                          },
+                          showSelectedIcon: false,
+                          style: ButtonStyle(
+                            visualDensity: VisualDensity.compact,
+                            shape: WidgetStateProperty.all(
+                              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -1253,14 +1258,20 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
             ),
           ),
           const SizedBox(height: 6),
-          CupertinoSegmentedControl<String>(
-            children: const {
-              'low': Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Text('Low')),
-              'medium': Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Text('Medium')),
-              'high': Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Text('High')),
-            },
-            groupValue: _selectedPriority,
-            onValueChanged: (v) => setState(() => _selectedPriority = v),
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'low', label: Text('Low')),
+              ButtonSegment(value: 'medium', label: Text('Medium')),
+              ButtonSegment(value: 'high', label: Text('High')),
+            ],
+            selected: {_selectedPriority},
+            onSelectionChanged: (set) => setState(() => _selectedPriority = set.first),
+            showSelectedIcon: false,
+            style: ButtonStyle(
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
           ),
 
           const SizedBox(height: 18),
@@ -1276,13 +1287,14 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
             ),
           ),
           const SizedBox(height: 6),
-          CupertinoSegmentedControl<String>(
-            children: const {
-              'daily': Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Text('Everyday (Daily)')),
-              'specific_days': Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Text('Specific Days of Week')),
-            },
-            groupValue: _selectedFrequency,
-            onValueChanged: (v) {
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'daily', label: Text('Everyday (Daily)')),
+              ButtonSegment(value: 'specific_days', label: Text('Specific Days')),
+            ],
+            selected: {_selectedFrequency},
+            onSelectionChanged: (set) {
+              final v = set.first;
               setState(() {
                 _selectedFrequency = v;
                 if (v == 'daily') {
@@ -1290,6 +1302,12 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
                 }
               });
             },
+            showSelectedIcon: false,
+            style: ButtonStyle(
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
           ),
 
           if (_selectedFrequency == 'specific_days') ...[
@@ -1362,7 +1380,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
                     ),
                     const SizedBox(height: 6),
                     OutlinedButton.icon(
-                      icon: const Icon(CupertinoIcons.calendar, size: 16),
+                      icon: const Icon(Icons.calendar_month_rounded, size: 18),
                       label: Text(
                         DateFormat('MMM d, yyyy').format(_selectedStartDate),
                         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
@@ -1398,7 +1416,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
                     ),
                     const SizedBox(height: 6),
                     OutlinedButton.icon(
-                      icon: const Icon(CupertinoIcons.calendar, size: 16),
+                      icon: const Icon(Icons.calendar_month_rounded, size: 18),
                       label: Text(
                         _isForever
                             ? 'Forever (No End)'
@@ -1461,7 +1479,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
 
             // Restart Habit Progress Button
             OutlinedButton.icon(
-              icon: const Icon(CupertinoIcons.arrow_counterclockwise, color: AppColors.high),
+              icon: const Icon(Icons.restart_alt_rounded, color: AppColors.high, size: 18),
               label: const Text(
                 'Restart Habit Progress',
                 style: TextStyle(color: AppColors.high, fontWeight: FontWeight.w700),
@@ -1469,6 +1487,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.high),
                 minimumSize: const Size.fromHeight(46),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: _confirmRestartProgress,
             ),
@@ -1477,7 +1496,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
 
             // Delete Habit Button
             OutlinedButton.icon(
-              icon: const Icon(CupertinoIcons.trash, color: AppColors.error),
+              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 18),
               label: const Text(
                 'Delete Habit',
                 style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700),
@@ -1485,6 +1504,7 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.error),
                 minimumSize: const Size.fromHeight(46),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               onPressed: _confirmDeleteHabit,
             ),

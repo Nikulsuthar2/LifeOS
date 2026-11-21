@@ -41,5 +41,41 @@ class JournalRepository {
       );
     }
   }
-}
 
+  Future<void> deleteEntry(String id) async {
+    final db = await _db;
+    await db.delete('journal_entries', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<JournalEntry>> getEntriesFiltered({String? mood, String? tag, String? query}) async {
+    final db = await _db;
+    String sql = 'SELECT * FROM journal_entries';
+    List<dynamic> args = [];
+    List<String> conditions = [];
+
+    if (mood != null && mood != 'all') {
+      conditions.add('mood = ?');
+      args.add(mood);
+    }
+
+    if (tag != null && tag.isNotEmpty) {
+      conditions.add('tags LIKE ?');
+      args.add('%$tag%');
+    }
+
+    if (query != null && query.trim().isNotEmpty) {
+      conditions.add('(went_well LIKE ? OR could_improve LIKE ? OR lessons_learned LIKE ? OR random_thoughts LIKE ?)');
+      final term = '%${query.trim()}%';
+      args.addAll([term, term, term, term]);
+    }
+
+    if (conditions.isNotEmpty) {
+      sql += ' WHERE ${conditions.join(' AND ')}';
+    }
+
+    sql += ' ORDER BY date_str DESC';
+
+    final rows = await db.rawQuery(sql, args);
+    return rows.map((r) => JournalEntry.fromMap(r)).toList();
+  }
+}

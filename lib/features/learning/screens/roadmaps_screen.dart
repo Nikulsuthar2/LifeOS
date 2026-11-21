@@ -5,6 +5,7 @@ import '../../../core/models/roadmap.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../providers/roadmap_provider.dart';
+import '../../skills/screens/skills_screen.dart';
 import 'roadmap_detail_screen.dart';
 
 class RoadmapsScreen extends ConsumerStatefulWidget {
@@ -109,6 +110,13 @@ class _RoadmapsScreenState extends ConsumerState<RoadmapsScreen> {
       appBar: AppBar(
         title: const Text('Learning Roadmaps'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.hub_rounded),
+            tooltip: 'Polymath Skills Matrix',
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (ctx) => const SkillsScreen()));
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.add),
             tooltip: 'New Roadmap',

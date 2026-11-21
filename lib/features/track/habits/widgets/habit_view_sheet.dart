@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -32,7 +31,7 @@ class HabitViewSheet extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF141416) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         border: Border(
           top: BorderSide(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
         ),
@@ -232,11 +231,11 @@ class HabitViewSheet extends ConsumerWidget {
                     children: [
                       Icon(
                         habitWithStatus.todayStatus == HabitDayStatus.done
-                            ? Icons.check_circle
+                            ? Icons.check_circle_rounded
                             : habitWithStatus.todayStatus == HabitDayStatus.fail
-                                ? Icons.cancel
-                                : Icons.radio_button_unchecked,
-                        size: 15,
+                                ? Icons.cancel_rounded
+                                : Icons.radio_button_unchecked_rounded,
+                        size: 16,
                         color: habitWithStatus.todayStatus == HabitDayStatus.done
                             ? AppColors.success
                             : habitWithStatus.todayStatus == HabitDayStatus.fail
@@ -274,11 +273,11 @@ class HabitViewSheet extends ConsumerWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  icon: const Icon(CupertinoIcons.calendar, size: 16),
+                  icon: const Icon(Icons.calendar_month_rounded, size: 18),
                   label: const Text('Calendar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -289,11 +288,11 @@ class HabitViewSheet extends ConsumerWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton.icon(
-                  icon: const Icon(CupertinoIcons.chart_bar, size: 16),
+                  icon: const Icon(Icons.bar_chart_rounded, size: 18),
                   label: const Text('Statistics', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -304,12 +303,12 @@ class HabitViewSheet extends ConsumerWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: FilledButton.icon(
-                  icon: const Icon(CupertinoIcons.pencil, size: 16),
+                  icon: const Icon(Icons.edit_rounded, size: 18),
                   label: const Text('Edit', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                   style: FilledButton.styleFrom(
                     backgroundColor: Color(habit.color),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
                     Navigator.pop(context);

@@ -18,7 +18,10 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.darkBackground,
       colorScheme: ColorScheme.dark(
         primary: primary,
-        onPrimary: Colors.white,
+        onPrimary: dynamicScheme?.onPrimary ??
+            (ThemeData.estimateBrightnessForColor(primary) == Brightness.light
+                ? const Color(0xFF141416)
+                : Colors.white),
         primaryContainer: primary.withValues(alpha: 0.22),
         onPrimaryContainer: Colors.white,
         secondary: secondary,

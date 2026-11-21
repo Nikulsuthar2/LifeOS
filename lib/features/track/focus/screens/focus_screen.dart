@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'ambient_focus_screen.dart';
 import 'focus_view.dart';
 
 class FocusScreen extends StatelessWidget {
@@ -16,6 +17,13 @@ class FocusScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Focus Pomodoro & Sessions', style: TextStyle(fontWeight: FontWeight.w700)),
+        actions: [
+          IconButton(
+            tooltip: 'Ambient Distraction-Free Mode',
+            icon: const Icon(Icons.fullscreen_rounded),
+            onPressed: () => AmbientFocusScreen.open(context),
+          ),
+        ],
       ),
       body: const FocusView(),
     );

@@ -190,6 +190,7 @@ class TaskItem {
         updatedAt = updatedAt ?? DateTime.now();
 
   bool get isCompleted => status == TaskStatus.completed;
+  bool get isTopFocus => isTopPriority;
 
   TaskItem copyWith({
     String? id,

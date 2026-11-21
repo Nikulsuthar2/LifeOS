@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/models/goal_project.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_tokens.dart';
 import '../providers/goal_provider.dart';
 
 class GoalsScreen extends ConsumerStatefulWidget {
@@ -13,97 +15,148 @@ class GoalsScreen extends ConsumerStatefulWidget {
 }
 
 class _GoalsScreenState extends ConsumerState<GoalsScreen> {
-  final _goalTitleController = TextEditingController();
-  final _goalDescController = TextEditingController();
-  final _projectTitleController = TextEditingController();
+  String _selectedCategory = 'All';
 
-  @override
-  void dispose() {
-    _goalTitleController.dispose();
-    _goalDescController.dispose();
-    _projectTitleController.dispose();
-    super.dispose();
-  }
+  void _showAddGoalDialog({Goal? existingGoal}) {
+    final titleController = TextEditingController(text: existingGoal?.title ?? '');
+    final descController = TextEditingController(text: existingGoal?.description ?? '');
+    String category = existingGoal?.category ?? 'Career';
+    DateTime? targetDate = existingGoal?.targetDate;
 
-  void _showAddGoalDialog() {
     showDialog(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: const Text('Add Life Goal'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _goalTitleController,
-              autofocus: true,
-              decoration: const InputDecoration(hintText: 'e.g. Master AI Engineering'),
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(existingGoal != null ? 'Edit Goal' : 'New Life Goal'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: titleController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Goal Title',
+                    hintText: 'e.g. Master AI Engineering, Run Marathon',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Why this goal matters',
+                    hintText: 'Core motivation and desired outcome...',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: category,
+                  decoration: const InputDecoration(labelText: 'Category'),
+                  items: ['Career', 'Health', 'Finance', 'Learning', 'Personal', 'Creativity'].map((c) {
+                    return DropdownMenuItem(value: c, child: Text(c));
+                  }).toList(),
+                  onChanged: (val) {
+                    if (val != null) setDialogState(() => category = val);
+                  },
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      targetDate != null
+                          ? 'Target: ${DateFormat('MMM yyyy').format(targetDate!)}'
+                          : 'No target deadline',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: targetDate ?? DateTime.now().add(const Duration(days: 90)),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2035),
+                        );
+                        if (picked != null) setDialogState(() => targetDate = picked);
+                      },
+                      child: const Text('Pick Date'),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _goalDescController,
-              decoration: const InputDecoration(hintText: 'Goal motivation and objectives'),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () async {
+                final title = titleController.text.trim();
+                if (title.isEmpty) return;
+
+                final repo = ref.read(goalRepositoryProvider);
+                if (existingGoal != null) {
+                  final updated = existingGoal.copyWith(
+                    title: title,
+                    description: descController.text.trim(),
+                    category: category,
+                    targetDate: targetDate,
+                  );
+                  await repo.updateGoal(updated);
+                } else {
+                  final newGoal = Goal(
+                    id: const Uuid().v4(),
+                    title: title,
+                    description: descController.text.trim(),
+                    category: category,
+                    targetDate: targetDate,
+                  );
+                  await repo.insertGoal(newGoal);
+                }
+
+                ref.invalidate(goalsListProvider);
+                if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+              },
+              child: Text(existingGoal != null ? 'Save' : 'Create Goal'),
             ),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () async {
-              final title = _goalTitleController.text.trim();
-              if (title.isEmpty) return;
-
-              final goal = Goal(
-                id: const Uuid().v4(),
-                title: title,
-                description: _goalDescController.text.trim(),
-                category: 'Career',
-              );
-
-              final repo = ref.read(goalRepositoryProvider);
-              await repo.insertGoal(goal);
-
-              _goalTitleController.clear();
-              _goalDescController.clear();
-              ref.invalidate(goalsListProvider);
-              if (dialogCtx.mounted) Navigator.pop(dialogCtx);
-            },
-            child: const Text('Create Goal'),
-          ),
-        ],
       ),
     );
   }
 
-  void _showAddProjectDialog() {
+  void _showAddMilestoneDialog(String goalId) {
+    final titleController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        title: const Text('Add Project'),
+        title: const Text('Add Milestone'),
         content: TextField(
-          controller: _projectTitleController,
+          controller: titleController,
           autofocus: true,
-          decoration: const InputDecoration(hintText: 'e.g. Mobile Portfolio App'),
+          decoration: const InputDecoration(
+            hintText: 'e.g. Complete System Design course',
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancel')),
           FilledButton(
             onPressed: () async {
-              final title = _projectTitleController.text.trim();
+              final title = titleController.text.trim();
               if (title.isEmpty) return;
 
-              final proj = Project(
+              final milestone = Milestone(
                 id: const Uuid().v4(),
+                goalId: goalId,
                 title: title,
               );
-
-              final repo = ref.read(goalRepositoryProvider);
-              await repo.insertProject(proj);
-
-              _projectTitleController.clear();
-              ref.invalidate(projectsListProvider);
+              await ref.read(goalRepositoryProvider).insertMilestone(milestone);
+              ref.invalidate(goalsListProvider);
               if (dialogCtx.mounted) Navigator.pop(dialogCtx);
             },
-            child: const Text('Create Project'),
+            child: const Text('Add'),
           ),
         ],
       ),
@@ -113,225 +166,311 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = Theme.of(context).colorScheme.primary;
     final goalsAsync = ref.watch(goalsListProvider);
-    final projectsAsync = ref.watch(projectsListProvider);
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
       appBar: AppBar(
-        title: const Text('Goals & Projects'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Add Goal',
-            onPressed: _showAddGoalDialog,
-          ),
-        ],
+        title: const Text(
+          'Life Goals & Milestones',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Projects Row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Active Projects',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: _showAddProjectDialog,
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('New Project', style: TextStyle(fontSize: 12)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            projectsAsync.when(
-              data: (projects) {
-                if (projects.isEmpty) {
-                  return const Text('No projects yet.');
-                }
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: projects.map((p) {
-                      return Container(
-                        margin: const EdgeInsets.only(right: 12),
-                        padding: const EdgeInsets.all(14),
-                        width: 200,
-                        decoration: BoxDecoration(
-                          color: isDark ? AppColors.darkCard : AppColors.lightCard,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Color(p.color),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              p.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              p.description.isNotEmpty ? p.description : 'In progress',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddGoalDialog(),
+        backgroundColor: primary,
+        foregroundColor: ThemeData.estimateBrightnessForColor(primary) == Brightness.light
+            ? const Color(0xFF141416)
+            : Colors.white,
+        icon: const Icon(Icons.flag_rounded),
+        label: const Text('New Goal', style: TextStyle(fontWeight: FontWeight.w700)),
+      ),
+      body: Column(
+        children: [
+          // Category chips
+          SizedBox(
+            height: 44,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              children: ['All', 'Career', 'Health', 'Finance', 'Learning', 'Personal', 'Creativity'].map((cat) {
+                final isSelected = _selectedCategory == cat;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(cat),
+                    selected: isSelected,
+                    onSelected: (_) => setState(() => _selectedCategory = cat),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.pill)),
+                    visualDensity: VisualDensity.compact,
+                    selectedColor: primary.withValues(alpha: 0.2),
+                    checkmarkColor: primary,
+                    labelStyle: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? primary : (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary),
+                    ),
                   ),
                 );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text('Error: $e'),
+              }).toList(),
             ),
-            const SizedBox(height: 24),
+          ),
+          const SizedBox(height: 8),
 
-            // Long-term Goals
-            Text(
-              'Long-Term Direction',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            goalsAsync.when(
+          // Goals list
+          Expanded(
+            child: goalsAsync.when(
               data: (goals) {
-                if (goals.isEmpty) {
-                  return const Text('No goals set yet.');
+                final filtered = _selectedCategory == 'All'
+                    ? goals
+                    : goals.where((g) => g.category == _selectedCategory).toList();
+
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.flag_outlined,
+                          size: 48,
+                          color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No goals in this category',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Tap + New Goal to establish your vision.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
                 }
 
-                return Column(
-                  children: goals.map((goal) {
+                return ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 4, AppSpacing.lg, 96),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final goal = filtered[index];
                     final progress = goal.progressPercentage;
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 14),
-                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: isDark ? AppColors.darkCard : AppColors.lightCard,
+                        color: isDark ? const Color(0xFF16161A) : Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: isDark ? AppColors.darkBorder : AppColors.lightBorder),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF26262C) : const Color(0xFFE5E5EA),
+                          width: 0.8,
+                        ),
                       ),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Header: Category, Target Date, Actions
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Expanded(
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: primary.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
                                 child: Text(
-                                  goal.title,
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                                  goal.category.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5,
+                                    color: primary,
+                                  ),
                                 ),
                               ),
-                              Text(
-                                '${(progress * 100).round()}%',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.primaryLight,
+                              const Spacer(),
+                              if (goal.targetDate != null) ...[
+                                Icon(Icons.event_outlined, size: 13, color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
+                                const SizedBox(width: 4),
+                                Text(
+                                  DateFormat('MMM yyyy').format(goal.targetDate!),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
+                              ],
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined, size: 16),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: 'Edit',
+                                onPressed: () => _showAddGoalDialog(existingGoal: goal),
+                              ),
+                              const SizedBox(width: 10),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline_rounded, size: 16, color: AppColors.error),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                tooltip: 'Delete',
+                                onPressed: () async {
+                                  await ref.read(goalRepositoryProvider).deleteGoal(goal.id);
+                                  ref.invalidate(goalsListProvider);
+                                },
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Title & Description
+                          Text(
+                            goal.title,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.2),
                           ),
                           if (goal.description.isNotEmpty) ...[
                             const SizedBox(height: 4),
                             Text(
                               goal.description,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
                                 color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                               ),
                             ),
                           ],
                           const SizedBox(height: 12),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: progress,
-                              minHeight: 6,
-                              backgroundColor: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                            ),
+
+                          // Progress Bar
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    backgroundColor: isDark ? const Color(0xFF26262C) : const Color(0xFFE8E8EC),
+                                    valueColor: AlwaysStoppedAnimation(
+                                      progress == 1.0 ? AppColors.success : primary,
+                                    ),
+                                    minHeight: 6,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                '${(progress * 100).toInt()}%',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: progress == 1.0 ? AppColors.success : primary,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
 
-                          // Milestones checklist
-                          Text(
-                            'Milestones',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          ...goal.milestones.map((m) {
-                            return Row(
-                              children: [
-                                Checkbox(
-                                  value: m.isCompleted,
-                                  activeColor: AppColors.success,
-                                  onChanged: (val) async {
-                                    final repo = ref.read(goalRepositoryProvider);
-                                    await repo.toggleMilestone(m.id, val ?? false);
-                                    ref.invalidate(goalsListProvider);
-                                  },
+                          // Milestones Section
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'MILESTONES (${goal.milestones.where((m) => m.isCompleted).length}/${goal.milestones.length})',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                  color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
                                 ),
-                                Expanded(
+                              ),
+                              InkWell(
+                                onTap: () => _showAddMilestoneDialog(goal.id),
+                                borderRadius: BorderRadius.circular(4),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                                   child: Text(
-                                    m.title,
+                                    '+ Add Milestone',
                                     style: TextStyle(
-                                      fontSize: 13,
-                                      decoration: m.isCompleted ? TextDecoration.lineThrough : null,
-                                      color: m.isCompleted
-                                          ? (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted)
-                                          : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: primary,
                                     ),
                                   ),
                                 ),
-                              ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+
+                          ...goal.milestones.map((milestone) {
+                            return InkWell(
+                              onTap: () async {
+                                await ref.read(goalRepositoryProvider).toggleMilestone(
+                                      milestone.id,
+                                      !milestone.isCompleted,
+                                    );
+                                ref.invalidate(goalsListProvider);
+                              },
+                              borderRadius: BorderRadius.circular(6),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      milestone.isCompleted
+                                          ? Icons.check_circle_rounded
+                                          : Icons.radio_button_unchecked_rounded,
+                                      size: 16,
+                                      color: milestone.isCompleted ? AppColors.success : (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        milestone.title,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          decoration: milestone.isCompleted ? TextDecoration.lineThrough : null,
+                                          color: milestone.isCompleted
+                                              ? (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted)
+                                              : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.close_rounded, size: 14),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () async {
+                                        await ref.read(goalRepositoryProvider).deleteMilestone(milestone.id);
+                                        ref.invalidate(goalsListProvider);
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
                             );
                           }),
                         ],
                       ),
                     );
-                  }).toList(),
+                  },
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text('Error: $e'),
+              error: (e, _) => Center(child: Text('Error: $e')),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

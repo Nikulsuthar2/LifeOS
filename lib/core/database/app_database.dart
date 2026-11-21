@@ -148,7 +148,51 @@ class AppDatabase {
           AND (start_date IS NULL OR start_date = '' OR start_date < date('now', 'localtime'));
       ''');
     } catch (_) {}
+
+    try {
+      await db.execute("ALTER TABLE journal_entries ADD COLUMN tags TEXT DEFAULT '[]'");
+    } catch (_) {}
+    try {
+      await db.execute('ALTER TABLE journal_entries ADD COLUMN updated_at TEXT');
+    } catch (_) {}
+
+    // Ensure all tables and indices exist in case of schema expansion
+    await _createTables(db);
     await _seedDefaultTemplatesIfEmpty(db);
+    await _seedDefaultGamificationIfEmpty(db);
+  }
+
+  Future<void> _seedDefaultGamificationIfEmpty(Database db) async {
+    try {
+      final profileCount = Sqflite.firstIntValue(
+        await db.rawQuery('SELECT COUNT(*) FROM gamification_profile'),
+      ) ?? 0;
+      if (profileCount == 0) {
+        await db.insert('gamification_profile', {
+          'id': 'default-profile',
+          'total_xp': 120,
+          'level': 2,
+          'streak_freezes': 2,
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      }
+
+      final badgeCount = Sqflite.firstIntValue(
+        await db.rawQuery('SELECT COUNT(*) FROM gamification_badges'),
+      ) ?? 0;
+      if (badgeCount == 0) {
+        final badges = [
+          {'id': 'b-first-step', 'code': 'first_task', 'title': 'First Step', 'description': 'Completed your first LifeOS task', 'icon': 'flag', 'unlocked_at': DateTime.now().toIso8601String()},
+          {'id': 'b-streak-3', 'code': 'streak_3', 'title': 'Momentum', 'description': 'Maintained a 3-day habit streak', 'icon': 'bolt', 'unlocked_at': DateTime.now().toIso8601String()},
+          {'id': 'b-polymath', 'code': 'polymath_init', 'title': 'Polymath Initiate', 'description': 'Began tracking multiple interest domains', 'icon': 'school', 'unlocked_at': null},
+          {'id': 'b-deep-focus', 'code': 'deep_focus', 'title': 'Deep Workmaster', 'description': 'Logged over 2 hours of deep focus', 'icon': 'timer', 'unlocked_at': null},
+          {'id': 'b-zen', 'code': 'mindful_journal', 'title': 'Mindful Scribe', 'description': 'Logged 7 daily evening reflections', 'icon': 'menu_book', 'unlocked_at': null},
+        ];
+        for (final b in badges) {
+          await db.insert('gamification_badges', b);
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> _seedDefaultTemplatesIfEmpty(Database db) async {

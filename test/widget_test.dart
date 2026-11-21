@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:life_os/core/models/habit.dart';
 import 'package:life_os/core/models/task.dart';
+import 'package:life_os/core/utils/time_utils.dart';
 import 'package:life_os/core/widgets/metric_card.dart';
 import 'package:life_os/core/widgets/priority_badge.dart';
 import 'package:life_os/features/tasks/providers/task_provider.dart';
@@ -326,7 +327,7 @@ void main() {
     expect(find.text('4/7 days · 57%'), findsOneWidget);
 
     // Verify action buttons exist
-    expect(find.byIcon(Icons.more_vert), findsOneWidget);
+    expect(find.byIcon(Icons.more_horiz_rounded), findsOneWidget);
   });
 
   testWidgets('HabitViewSheet displays quick details, states, and 3 detail navigation buttons', (WidgetTester tester) async {
@@ -415,9 +416,50 @@ void main() {
     expect(find.text('Everyday · Afternoon'), findsOneWidget);
 
     // Verify single 3-state checkbox is rendered with done icon (check)
-    expect(find.byIcon(Icons.check), findsOneWidget);
+    expect(find.byIcon(Icons.check_rounded), findsOneWidget);
 
     // Verify 7 weekdays and bottom action buttons are NOT present in collapsed mode
-    expect(find.byIcon(Icons.more_vert), findsNothing);
+    expect(find.byIcon(Icons.more_horiz_rounded), findsNothing);
+  });
+
+  test('TimeUtils converts 24-hr strings and hour integers to clean 12-hr AM/PM', () {
+    expect(TimeUtils.formatTo12Hour('14:30'), '2:30 PM');
+    expect(TimeUtils.formatTo12Hour('09:05'), '9:05 AM');
+    expect(TimeUtils.formatTo12Hour('12:00'), '12:00 PM');
+    expect(TimeUtils.formatTo12Hour('00:00'), '12:00 AM');
+    expect(TimeUtils.formatTo12Hour(null), 'Anytime');
+
+    expect(TimeUtils.formatHour(0), '12 AM');
+    expect(TimeUtils.formatHour(9), '9 AM');
+    expect(TimeUtils.formatHour(12), '12 PM');
+    expect(TimeUtils.formatHour(14), '2 PM');
+    expect(TimeUtils.formatHour(23), '11 PM');
+  });
+
+  testWidgets('TaskCard renders Top Focus star chip when isTopFocus is true', (WidgetTester tester) async {
+    final topFocusTask = TaskItem(
+      id: 'task-star-test',
+      title: 'Review System Architecture',
+      priority: TaskPriority.high,
+      scheduledTime: '15:00',
+      isTopPriority: true,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: TaskCard(task: topFocusTask),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Review System Architecture'), findsOneWidget);
+    expect(find.text('3:00 PM'), findsOneWidget);
+    expect(find.text('Top Focus'), findsOneWidget);
+    expect(find.byIcon(Icons.star_rounded), findsOneWidget);
+    expect(find.text('High'), findsOneWidget);
   });
 }

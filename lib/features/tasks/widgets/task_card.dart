@@ -1,16 +1,17 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/task.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../core/utils/time_utils.dart';
 import '../providers/task_provider.dart';
 
-/// Minimal, modern Cupertino / Things-3 inspired task list item for Life OS.
-/// - Crisp squircle checkbox with tactile completion state
-/// - Typography-led visual hierarchy with zero container clutter
-/// - Subtle micro-badges for priority, time, and subtasks
-/// - Description preview removed to ensure scannability and calm spacing
+/// Material 3 Expressive task list card for Life OS.
+/// Features:
+/// - Tactile squircle checkbox with animated completion state
+/// - Clear typographic hierarchy and generous breathing room
+/// - Expressive micro-pills for timing, priority, subtasks, and recurrence
+/// - Uncrowded, calm scannability
 class TaskCard extends ConsumerWidget {
   final TaskItem task;
   final VoidCallback? onTap;
@@ -29,7 +30,7 @@ class TaskCard extends ConsumerWidget {
     final primary = Theme.of(context).colorScheme.primary;
     final isDone = task.isCompleted;
 
-    // Priority color mapping
+    // Semantic priority color
     Color priorityColor;
     switch (task.priority) {
       case TaskPriority.urgent:
@@ -47,27 +48,34 @@ class TaskCard extends ConsumerWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           child: AnimatedContainer(
             duration: AppDurations.fast,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF141416) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              color: isDark ? const Color(0xFF151518) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? const Color(0xFF242428) : const Color(0xFFE5E5EA),
+                color: isDark ? const Color(0xFF24242A) : const Color(0xFFE6E6EA),
                 width: 0.8,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.03),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // 1. Tactile Squircle Checkbox (Enlarged 28x28 Things-3 style)
+                // 1. Tactile Checkbox (M3 Expressive Squircle)
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: () async {
@@ -84,8 +92,8 @@ class TaskCard extends ConsumerWidget {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       curve: Curves.easeOutCubic,
-                      width: 28,
-                      height: 28,
+                      width: 30,
+                      height: 30,
                       decoration: BoxDecoration(
                         color: isDone ? AppColors.success : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
@@ -97,7 +105,7 @@ class TaskCard extends ConsumerWidget {
                         ),
                       ),
                       child: isDone
-                          ? const Icon(CupertinoIcons.checkmark_alt, size: 18, color: Colors.white)
+                          ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
                           : null,
                     ),
                   ),
@@ -115,102 +123,155 @@ class TaskCard extends ConsumerWidget {
                           fontSize: 15.5,
                           fontWeight: FontWeight.w600,
                           letterSpacing: -0.2,
+                          height: 1.3,
                           decoration: isDone ? TextDecoration.lineThrough : null,
                           color: isDone
                               ? (isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted)
                               : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary),
                         ),
                       ),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 7),
 
-                      // Metadata row: Essential context only
-                      Row(
+                      // Metadata row: Expressive, spacious pills
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          // Timing: All-Day capsule or Scheduled Time
+                          // Timing Pill
                           if (task.isAllDay) ...[
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                               decoration: BoxDecoration(
-                                color: primary.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(4),
+                                color: primary.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 'All Day',
                                 style: TextStyle(
-                                  fontSize: 10.5,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: primary,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
                           ] else if (task.scheduledTime != null && task.scheduledTime!.isNotEmpty) ...[
-                            Icon(
-                              CupertinoIcons.clock,
-                              size: 12,
-                              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              task.scheduledTime!,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w500,
-                                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF202025) : const Color(0xFFF0F0F4),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.schedule_rounded,
+                                    size: 12,
+                                    color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    TimeUtils.formatTo12Hour(task.scheduledTime!),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 8),
                           ],
 
-                          // Priority Micro-Badge (dot + label)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 5,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: priorityColor,
-                                ),
+                          // Top Focus Star Chip
+                          if (task.isTopFocus)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: primary.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(6),
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                task.priority.displayName,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: priorityColor,
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.star_rounded,
+                                    size: 12,
+                                    color: primary,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    'Top Focus',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: primary,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
+
+                          // Priority Micro-Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: priorityColor.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 5,
+                                  height: 5,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: priorityColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  task.priority.displayName,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: priorityColor,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
 
-                          // Subtasks count (only if present)
+                          // Subtasks count
                           if (task.subtasks.isNotEmpty) ...[
-                            const SizedBox(width: 8),
-                            Icon(
-                              CupertinoIcons.list_bullet,
-                              size: 11,
-                              color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                            ),
-                            const SizedBox(width: 3),
-                            Text(
-                              '${task.subtasks.where((s) => s.isCompleted).length}/${task.subtasks.length}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.checklist_rounded,
+                                  size: 13,
+                                  color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '${task.subtasks.where((s) => s.isCompleted).length}/${task.subtasks.length}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? AppColors.darkTextMuted : AppColors.lightTextMuted,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
 
                           // Recurrence indicator
                           if (task.recurrence != 'none' && task.recurrence.isNotEmpty) ...[
-                            const SizedBox(width: 8),
                             Icon(
-                              CupertinoIcons.repeat,
-                              size: 12,
+                              Icons.repeat_rounded,
+                              size: 13,
                               color: primary,
                             ),
                           ],

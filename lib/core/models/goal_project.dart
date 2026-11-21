@@ -124,6 +124,70 @@ class Goal {
   }
 }
 
+class ProjectFeature {
+  final String id;
+  final String projectId;
+  final String title;
+  final String status; // 'upcoming', 'in_progress', 'done'
+  final String priority; // 'low', 'medium', 'high', 'urgent'
+  final int position;
+  final DateTime createdAt;
+
+  ProjectFeature({
+    required this.id,
+    required this.projectId,
+    required this.title,
+    this.status = 'upcoming',
+    this.priority = 'medium',
+    this.position = 0,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  ProjectFeature copyWith({
+    String? id,
+    String? projectId,
+    String? title,
+    String? status,
+    String? priority,
+    int? position,
+    DateTime? createdAt,
+  }) {
+    return ProjectFeature(
+      id: id ?? this.id,
+      projectId: projectId ?? this.projectId,
+      title: title ?? this.title,
+      status: status ?? this.status,
+      priority: priority ?? this.priority,
+      position: position ?? this.position,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'project_id': projectId,
+      'title': title,
+      'status': status,
+      'priority': priority,
+      'position': position,
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
+
+  factory ProjectFeature.fromMap(Map<String, dynamic> map) {
+    return ProjectFeature(
+      id: map['id'] as String,
+      projectId: map['project_id'] as String,
+      title: map['title'] as String,
+      status: (map['status'] as String?) ?? 'upcoming',
+      priority: (map['priority'] as String?) ?? 'medium',
+      position: (map['position'] as int? ?? 0),
+      createdAt: map['created_at'] != null ? DateTime.tryParse(map['created_at'] as String) ?? DateTime.now() : DateTime.now(),
+    );
+  }
+}
+
 class Project {
   final String id;
   final String title;
@@ -134,6 +198,7 @@ class Project {
   final DateTime? targetDate;
   final int color;
   final DateTime createdAt;
+  final List<ProjectFeature> features;
 
   Project({
     required this.id,
@@ -145,7 +210,13 @@ class Project {
     this.targetDate,
     this.color = 0xFF6366F1,
     DateTime? createdAt,
+    this.features = const [],
   }) : createdAt = createdAt ?? DateTime.now();
+
+  double get progressPercentage {
+    if (features.isEmpty) return status == 'completed' ? 1.0 : 0.0;
+    return features.where((f) => f.status == 'done').length / features.length;
+  }
 
   Project copyWith({
     String? id,
@@ -157,6 +228,7 @@ class Project {
     DateTime? targetDate,
     int? color,
     DateTime? createdAt,
+    List<ProjectFeature>? features,
   }) {
     return Project(
       id: id ?? this.id,
@@ -168,6 +240,7 @@ class Project {
       targetDate: targetDate ?? this.targetDate,
       color: color ?? this.color,
       createdAt: createdAt ?? this.createdAt,
+      features: features ?? this.features,
     );
   }
 
@@ -185,7 +258,7 @@ class Project {
     };
   }
 
-  factory Project.fromMap(Map<String, dynamic> map) {
+  factory Project.fromMap(Map<String, dynamic> map, {List<ProjectFeature> features = const []}) {
     return Project(
       id: map['id'] as String,
       title: map['title'] as String,
@@ -196,7 +269,7 @@ class Project {
       targetDate: map['target_date'] != null ? DateTime.tryParse(map['target_date'] as String) : null,
       color: (map['color'] as int?) ?? 0xFF6366F1,
       createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'] as String) : DateTime.now(),
+      features: features,
     );
   }
 }
-

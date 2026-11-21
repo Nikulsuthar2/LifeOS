@@ -19,6 +19,7 @@ import '../../tasks/widgets/task_card.dart';
 import '../../tasks/widgets/task_view_sheet.dart';
 import '../../track/focus/providers/focus_provider.dart';
 import '../../track/habits/providers/habit_provider.dart';
+import '../../gamification/widgets/unified_life_score_heatmap_card.dart';
 
 /// Premium, action-oriented Home / Dashboard for Life OS.
 /// Replaces oversized statistics with actionable priorities, quick habit toggles,
@@ -204,6 +205,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   habitsTotal: habitMetricsAsync.value?['total'] ?? 0,
                   roadmapProgress: (activeRoadmapAsync.value?['roadmap'] as Roadmap?)?.progressPercentage ?? 0.0,
                 ),
+                const SizedBox(height: AppSpacing.md),
+                const UnifiedLifeScoreHeatmapCard(),
                 const SizedBox(height: AppSpacing.md),
 
                 // 2. Today's Top Priorities (Action-first hero section)

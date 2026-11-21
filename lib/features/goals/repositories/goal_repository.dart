@@ -34,7 +34,20 @@ class GoalRepository {
   Future<List<Project>> getProjects() async {
     final db = await _db;
     final rows = await db.query('projects', orderBy: 'created_at DESC');
-    return rows.map((r) => Project.fromMap(r)).toList();
+    final List<Project> projects = [];
+
+    for (final r in rows) {
+      final pId = r['id'] as String;
+      final fRows = await db.query(
+        'project_features',
+        where: 'project_id = ?',
+        whereArgs: [pId],
+        orderBy: 'position ASC, created_at ASC',
+      );
+      final features = fRows.map((f) => ProjectFeature.fromMap(f)).toList();
+      projects.add(Project.fromMap(r, features: features));
+    }
+    return projects;
   }
 
   Future<void> insertGoal(Goal goal) async {
@@ -49,10 +62,20 @@ class GoalRepository {
     });
   }
 
-  Future<void> insertProject(Project project) async {
+  Future<void> updateGoal(Goal goal) async {
     final db = await _db;
-    final pId = project.id.isEmpty ? _uuid.v4() : project.id;
-    await db.insert('projects', project.copyWith(id: pId).toMap());
+    await db.update('goals', goal.toMap(), where: 'id = ?', whereArgs: [goal.id]);
+  }
+
+  Future<void> deleteGoal(String goalId) async {
+    final db = await _db;
+    await db.delete('goals', where: 'id = ?', whereArgs: [goalId]);
+  }
+
+  Future<void> insertMilestone(Milestone milestone) async {
+    final db = await _db;
+    final mId = milestone.id.isEmpty ? _uuid.v4() : milestone.id;
+    await db.insert('milestones', milestone.copyWith(id: mId).toMap());
   }
 
   Future<void> toggleMilestone(String milestoneId, bool isCompleted) async {
@@ -64,5 +87,48 @@ class GoalRepository {
       whereArgs: [milestoneId],
     );
   }
-}
 
+  Future<void> deleteMilestone(String milestoneId) async {
+    final db = await _db;
+    await db.delete('milestones', where: 'id = ?', whereArgs: [milestoneId]);
+  }
+
+  // --- Project Management & Features ---
+
+  Future<void> insertProject(Project project) async {
+    final db = await _db;
+    final pId = project.id.isEmpty ? _uuid.v4() : project.id;
+    await db.insert('projects', project.copyWith(id: pId).toMap());
+  }
+
+  Future<void> updateProject(Project project) async {
+    final db = await _db;
+    await db.update('projects', project.toMap(), where: 'id = ?', whereArgs: [project.id]);
+  }
+
+  Future<void> deleteProject(String projectId) async {
+    final db = await _db;
+    await db.delete('projects', where: 'id = ?', whereArgs: [projectId]);
+  }
+
+  Future<void> insertProjectFeature(ProjectFeature feature) async {
+    final db = await _db;
+    final fId = feature.id.isEmpty ? _uuid.v4() : feature.id;
+    await db.insert('project_features', feature.copyWith(id: fId).toMap());
+  }
+
+  Future<void> updateProjectFeatureStatus(String featureId, String status) async {
+    final db = await _db;
+    await db.update(
+      'project_features',
+      {'status': status},
+      where: 'id = ?',
+      whereArgs: [featureId],
+    );
+  }
+
+  Future<void> deleteProjectFeature(String featureId) async {
+    final db = await _db;
+    await db.delete('project_features', where: 'id = ?', whereArgs: [featureId]);
+  }
+}
